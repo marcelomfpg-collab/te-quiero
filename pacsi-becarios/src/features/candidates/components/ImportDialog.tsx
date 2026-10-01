@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { maxCodeNumber } from '../../../domain/codes';
 import { downloadCsv } from '../../../lib/csv';
 import { importCandidatesCsv, templateCsv, type ImportResult } from '../../../services/csvImport';
 import type { Candidate } from '../../../domain/types';
@@ -29,7 +30,7 @@ export function ImportDialog({ existing, today, onImport, onClose }: ImportDialo
       importCandidatesCsv(await file.text(), {
         existingDnis: new Set(existing.map((c) => c.dni)),
         today,
-        nextIndex: existing.length,
+        nextIndex: maxCodeNumber(existing),
       }),
     );
   };

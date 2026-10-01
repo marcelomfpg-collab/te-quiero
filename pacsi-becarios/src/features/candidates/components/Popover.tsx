@@ -6,10 +6,12 @@ interface PopoverProps {
   count?: number;
   children: ReactNode;
   align?: 'start' | 'end';
+  /** Cierra el panel al pulsar cualquier botón de dentro (menús de acciones). */
+  closeOnSelect?: boolean;
 }
 
 /** Botón desplegable accesible: se cierra con Escape o clic fuera. */
-export function Popover({ label, count = 0, children, align = 'start' }: PopoverProps) {
+export function Popover({ label, count = 0, children, align = 'start', closeOnSelect = false }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -51,7 +53,11 @@ export function Popover({ label, count = 0, children, align = 'start' }: Popover
         </svg>
       </button>
       {open && (
-        <div id={panelId} className={`popover__panel popover__panel--${align}`}>
+        <div
+          id={panelId}
+          className={`popover__panel popover__panel--${align}`}
+          onClick={closeOnSelect ? (e) => (e.target as HTMLElement).closest('button') && setOpen(false) : undefined}
+        >
           {children}
         </div>
       )}

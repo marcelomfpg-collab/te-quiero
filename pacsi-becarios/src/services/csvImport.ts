@@ -1,4 +1,5 @@
 import { CAREER_LABEL } from '../domain/catalogs';
+import { formatCode } from '../domain/codes';
 import type { Candidate, Career, License, PracticeType, Shift } from '../domain/types';
 import { parseCsv, toCsv } from '../lib/csv';
 import { parseDate } from '../lib/dates';
@@ -171,7 +172,7 @@ export function importCandidatesCsv(text: string, ctx: ImportContext): ImportRes
     const career = parseCareer(get('carrera'));
     result.candidates.push({
       id: `imp-${dni}`,
-      code: `POS-${String(next).padStart(4, '0')}`,
+      code: formatCode(next),
       firstNames: get('nombres'),
       lastNames: get('apellidos'),
       dni,

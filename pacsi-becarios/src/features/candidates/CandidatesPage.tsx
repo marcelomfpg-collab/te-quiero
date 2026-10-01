@@ -1,23 +1,28 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { CAREER_LABEL, CAREERS, ELIGIBILITY_LABEL, REQUIREMENT_SHORT, REQUIREMENTS, SHIFTS, STAGE_LABEL, STAGES, STUDY_YEARS } from '../../domain/catalogs';
 import { CONVOCATORIA } from '../../domain/convocatoria';
-import { downloadCsv, toCsv, type CsvColumn } from '../../lib/csv';
+import { downloadCsv, downloadFile, toCsv, type CsvColumn } from '../../lib/csv';
 import { todayIso } from '../../lib/dates';
+import type { Candidate } from '../../domain/types';
 import type { CandidateRepository } from '../../services';
+import { fromBackup, toBackup } from '../../services/backup';
+import { generateMockCandidates } from '../../services/mockData';
 import { ActiveFilters } from './components/ActiveFilters';
 import { CandidateDrawer } from './components/CandidateDrawer';
+import { CandidateForm } from './components/CandidateForm';
 import { CandidatesTable } from './components/CandidatesTable';
 import { ConvocatoriaTimeline } from './components/ConvocatoriaTimeline';
 import { EligibilitySummary } from './components/EligibilitySummary';
 import { ImportDialog } from './components/ImportDialog';
 import { MultiSelect } from './components/MultiSelect';
 import { Pagination } from './components/Pagination';
+import { Popover } from './components/Popover';
 import { SearchInput } from './components/SearchInput';
-import { EmptyState, ErrorState, TableSkeleton } from './components/States';
+import { EmptyState, ErrorState, TableSkeleton, WelcomeState } from './components/States';
 import { buildIndex, paginate, runQuery, sortRows, type IndexedCandidate } from './filters/filterEngine';
 import { countActiveFilters, type ListKey } from './filters/filterState';
 import { useFilterState } from './filters/useFilterState';
-import { useCandidates } from './hooks/useCandidates';
+import { messageOf, useCandidates } from './hooks/useCandidates';
 
 const CSV_COLUMNS: CsvColumn<IndexedCandidate>[] = [
   { header: 'Código', value: (r) => r.candidate.code },
@@ -53,6 +58,8 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const [filters, dispatch] = useFilterState();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  /** null = cerrado, 'new' = alta, o el postulante que se edita. */
+  const [form, setForm] = useState<'new' | Candidate | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -74,6 +81,55 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const activeCount = countActiveFilters(filters);
   const closeDrawer = useCallback(() => setSelectedId(null), []);
   const closeImport = useCallback(() => setImporting(false), []);
+  const closeForm = useCallback(() => setForm(null), []);
+  const isEmpty = load.data?.length === 0;
+
+  const saveCandidate = async (candidate: Candidate) => {
+    if (form === 'new') {
+      await load.create(candidate);
+      setToast({ text: `${candidate.firstNames} agregado(a). Resultado calculado automáticamente.`, tone: 'ok' });
+    } else {
+      await load.update(candidate.id, candidate);
+    }
+  };
+
+  const deleteSelected = () => {
+    if (!selected) return;
+    if (!window.confirm(`¿Eliminar a ${selected.fullName}? Esta acción no se puede deshacer.`)) return;
+    void load.remove(selected.candidate.id);
+    setSelectedId(null);
+  };
+
+  const replaceData = async (candidates: Candidate[], message: string) => {
+    try {
+      await load.replaceAll(candidates);
+      dispatch({ type: 'reset' });
+      setToast({ text: message, tone: 'ok' });
+    } catch (error) {
+      notifyError(messageOf(error, 'No se pudo completar la operación.'));
+    }
+  };
+
+  const loadSample = () => {
+    if (load.data?.length && !window.confirm('Esto reemplaza los datos actuales por 180 postulantes de ejemplo. ¿Continuar?')) return;
+    void replaceData(generateMockCandidates(today), 'Se cargaron 180 postulantes de ejemplo.');
+  };
+
+  const clearAll = () => {
+    if (!window.confirm('¿Borrar TODOS los postulantes de esta computadora? Haga antes una copia de seguridad.')) return;
+    void replaceData([], 'Se borraron todos los postulantes.');
+  };
+
+  const restoreBackup = (file: File) => {
+    file
+      .text()
+      .then((text) => {
+        const candidates = fromBackup(text);
+        if (!window.confirm(`La copia tiene ${candidates.length} postulantes y reemplazará los datos actuales. ¿Continuar?`)) return;
+        void replaceData(candidates, `Copia restaurada: ${candidates.length} ${candidates.length === 1 ? "postulante" : "postulantes"}.`);
+      })
+      .catch((error: unknown) => notifyError(messageOf(error, 'No se pudo leer la copia de seguridad.')));
+  };
 
   const handleImport = async (candidates: Parameters<typeof load.importMany>[0]) => {
     const n = await load.importMany(candidates);
@@ -94,15 +150,35 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           </div>
         </div>
         <div className="page__actions">
-          <button type="button" className="btn btn--secondary" onClick={load.reload} disabled={load.status === 'loading'}>
-            {load.status === 'loading' && hasData ? 'Actualizando…' : 'Actualizar'}
+          <button type="button" className="btn btn--primary" onClick={() => setForm('new')} disabled={!hasData}>
+            ＋ Nuevo postulante
           </button>
           <button type="button" className="btn btn--secondary" onClick={() => setImporting(true)} disabled={!hasData}>
-            Importar CVs
+            Importar Excel
           </button>
-          <button type="button" className="btn btn--primary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
+          <button type="button" className="btn btn--secondary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
             Exportar ({sorted.length.toLocaleString('es-PE')})
           </button>
+          <Popover label="Más" align="end" closeOnSelect>
+            <div className="menu">
+              <button type="button" className="menu__item" disabled={!load.data?.length} onClick={() => load.data && downloadFile(`copia-becarios-2027-${today}.json`, toBackup(load.data), 'application/json')}>
+                Copia de seguridad
+                <span className="muted">Descarga todos los datos en un archivo</span>
+              </button>
+              <label className="menu__item">
+                Restaurar copia de seguridad
+                <span className="muted">Desde un archivo descargado antes</span>
+                <input type="file" accept=".json,application/json" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) restoreBackup(f); }} />
+              </label>
+              <button type="button" className="menu__item" onClick={loadSample}>
+                Cargar datos de ejemplo
+                <span className="muted">180 postulantes ficticios</span>
+              </button>
+              <button type="button" className="menu__item menu__item--danger" disabled={!load.data?.length} onClick={clearAll}>
+                Borrar todos los datos
+              </button>
+            </div>
+          </Popover>
         </div>
       </header>
 
@@ -119,6 +195,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
       />
 
       <section className="card" aria-label="Postulantes">
+        {!isEmpty && (
         <div className="toolbar">
           <SearchInput value={filters.query} onChange={(query) => dispatch({ type: 'setQuery', query })} />
           <div className="toolbar__filters">
@@ -136,6 +213,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           </div>
         </div>
 
+        )}
         <ActiveFilters state={filters} dispatch={dispatch} />
 
         {load.status === 'error' && hasData && (
@@ -147,7 +225,9 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           </div>
         )}
 
-        {!hasData && load.status === 'error' ? (
+        {isEmpty ? (
+          <WelcomeState onAdd={() => setForm('new')} onImport={() => setImporting(true)} onSample={loadSample} />
+        ) : !hasData && load.status === 'error' ? (
           <ErrorState message={load.message} onRetry={load.reload} />
         ) : !hasData ? (
           <TableSkeleton />
@@ -181,7 +261,12 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
         </p>
       </section>
 
-      {selected && <CandidateDrawer row={selected} onClose={closeDrawer} onUpdate={load.update} />}
+      {selected && !form && (
+        <CandidateDrawer row={selected} onClose={closeDrawer} onUpdate={load.update} onEdit={() => setForm(selected.candidate)} onDelete={deleteSelected} />
+      )}
+      {form && load.data && (
+        <CandidateForm initial={form === 'new' ? undefined : form} existing={load.data} today={today} onSave={saveCandidate} onClose={closeForm} />
+      )}
       {importing && load.data && <ImportDialog existing={load.data} today={today} onImport={handleImport} onClose={closeImport} />}
       {toast && (
         <div className={`toast toast--${toast.tone}`} role={toast.tone === 'error' ? 'alert' : 'status'}>

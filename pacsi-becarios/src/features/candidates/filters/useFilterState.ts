@@ -9,13 +9,7 @@ export function useFilterState(): [FilterState, React.Dispatch<FilterAction>] {
   const [state, dispatch] = useReducer(filtersReducer, window.location.search, parseFilters);
 
   useEffect(() => {
-    const params = new URLSearchParams(serializeFilters(state));
-    // Conserva los parámetros técnicos que no son filtros.
-    for (const keep of ['simularError']) {
-      const value = new URLSearchParams(window.location.search).get(keep);
-      if (value !== null) params.set(keep, value);
-    }
-    const query = params.toString();
+    const query = serializeFilters(state);
     const next = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
     if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
       window.history.replaceState(null, '', next);

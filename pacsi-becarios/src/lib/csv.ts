@@ -17,11 +17,16 @@ export function toCsv<T>(rows: readonly T[], columns: CsvColumn<T>[], separator 
 
 export function downloadCsv(filename: string, csv: string): void {
   // BOM para que Excel respete tildes y eñes.
-  const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  downloadFile(filename, '\uFEFF' + csv, 'text/csv;charset=utf-8');
+}
+
+export function downloadFile(filename: string, content: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type }));
   const link = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /**

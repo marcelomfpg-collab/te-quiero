@@ -1,18 +1,38 @@
 # Becarios PACSI 2027-A · Filtro de postulantes
 
-Herramienta interna de **Pacsi Ingenieros S.A.C.** para evaluar los CVs de la convocatoria de
-practicantes preprofesionales **Becarios PACSI 2027-A** contra los requisitos del aviso oficial,
-ordenar a los candidatos y llevar el proceso hasta los resultados.
+Programa de **Pacsi Ingenieros S.A.C.** para evaluar los CVs de la convocatoria de practicantes
+preprofesionales **Becarios PACSI 2027-A**: revisa solo los requisitos del aviso, muestra quién es
+apto y lleva el proceso hasta los resultados.
+
+## Descargar el programa
+
+👉 **https://github.com/marcelomfpg-collab/te-quiero/releases/latest**
+
+| Archivo | Para quién |
+|---|---|
+| `Becarios-PACSI-Instalador-….exe` | Windows: se instala con acceso directo en el escritorio *(recomendado)* |
+| `Becarios-PACSI-Portable-….exe` | Windows sin instalar: doble clic y listo (sirve desde un USB) |
+| `Becarios-PACSI-Navegador-….html` | Cualquier computadora: se abre con doble clic en Chrome o Edge, sin internet |
+
+Si Windows muestra "Windows protegió su PC": **Más información → Ejecutar de todas formas**
+(el programa no tiene firma digital comercial).
+
+**Los datos se guardan en la computadora donde se usa.** Para respaldarlos o pasarlos a otra PC:
+**Más → Copia de seguridad** y luego, en la otra PC, **Más → Restaurar copia de seguridad**.
+
+Cada vez que se cambia el código, GitHub Actions (`.github/workflows/becarios-programa.yml`) prueba,
+fabrica y publica una nueva versión en esa misma página.
+
+## Para desarrolladores
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 (datos de demostración)
-npm test           # 45 pruebas de reglas de negocio, importación y filtros
-npm run build      # typecheck + build de producción en dist/
+npm run dev        # versión web en http://localhost:5173
+npm run app        # abre el programa de escritorio
+npm test           # 50 pruebas: reglas de negocio, importación, guardado y filtros
+npm run build      # genera dist/index.html (un único archivo, funciona sin servidor)
+npm run dist:win   # instalador de Windows en release/ (ejecutar en Windows)
 ```
-
-Parámetros útiles en la URL: `?reiniciar` borra los cambios guardados de la demo y
-`?simularError=1` muestra la pantalla de error.
 
 ## Reglas de la convocatoria (fuente: aviso oficial)
 
@@ -42,7 +62,7 @@ blandas 30, año de carrera 20, carrera técnica 15. El desglose se ve en el det
 
 ## Flujo de trabajo del reclutador
 
-1. **Importar CVs**: descargar la plantilla CSV, llenar una fila por CV recibido en
+1. **Registrar CVs**: con **＋ Nuevo postulante** (formulario) o **Importar Excel**: descargar la plantilla CSV, llenar una fila por CV recibido en
    reclutamiento@pacsiingenieros.com y subirla. El sistema valida cada fila (DNI, brevete,
    fechas DD/MM/AAAA…), indica en qué fila de Excel está cada error y omite los DNI repetidos.
 2. **Filtrar**: las tarjetas Aptos / Por evaluar / No aptos / Con observaciones son filtros de un
@@ -68,8 +88,10 @@ src/
 │   ├── subject.ts           Validación del asunto del correo
 │   ├── catalogs.ts / types.ts
 ├── services/                Acceso a datos detrás de CandidateRepository
-│   ├── mockRepository.ts    Demo: datos generados + cambios guardados en el navegador
-│   ├── httpRepository.ts    API real: GET/PATCH /postulantes, POST /postulantes/importar
+│   ├── localRepository.ts   Guarda los postulantes en la computadora (uso actual)
+│   ├── httpRepository.ts    Para un futuro servidor central (varios reclutadores)
+│   ├── backup.ts            Copia de seguridad / restauración en JSON
+│   ├── mockData.ts          180 postulantes ficticios ("Cargar datos de ejemplo")
 │   └── csvImport.ts         Planilla CSV → postulantes validados
 ├── lib/                     Utilidades: CSV, fechas, texto sin tildes
 └── features/candidates/
@@ -83,8 +105,9 @@ src/
 y los conteos de todas las facetas salen de una sola pasada, la búsqueda usa debounce y
 `useDeferredValue`, y solo se dibujan 25–100 filas por página.
 
-**Conexión a un backend real:** definir `VITE_API_URL` en `.env` (ver `.env.example`). La UI no
-cambia, porque solo depende de la interfaz `CandidateRepository`.
+**Escritorio:** `electron/main.cjs` abre el mismo `dist/index.html` en una ventana propia, sin
+navegador ni internet. **Servidor central (futuro):** definir `VITE_API_URL` (ver `.env.example`); la
+UI no cambia, porque solo depende de la interfaz `CandidateRepository`.
 
 ## Próximos pasos sugeridos
 

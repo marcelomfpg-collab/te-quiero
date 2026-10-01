@@ -10,14 +10,19 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     throw new RepositoryError('No se pudo conectar con el servidor. Verifique su conexión.');
   }
   if (!response.ok) throw new RepositoryError(`El servidor respondió con un error (${response.status}).`, response.status);
-  return (await response.json()) as T;
+  return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
+/** Implementación para cuando exista un servidor central (varios reclutadores a la vez). */
 export function createHttpRepository(baseUrl: string): CandidateRepository {
   const api = `${baseUrl.replace(/\/$/, '')}/postulantes`;
+  const one = (id: string) => `${api}/${encodeURIComponent(id)}`;
   return {
     list: (signal) => request<Candidate[]>(api, { signal }),
-    update: (id, patch) => request<Candidate>(`${api}/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }),
-    importMany: (candidates) => request<Candidate[]>(`${api}/importar`, { method: 'POST', body: JSON.stringify(candidates) }),
+    create: (c) => request<Candidate>(api, { method: 'POST', body: JSON.stringify(c) }),
+    update: (id, patch) => request<Candidate>(one(id), { method: 'PATCH', body: JSON.stringify(patch) }),
+    remove: (id) => request<void>(one(id), { method: 'DELETE' }),
+    importMany: (cs) => request<Candidate[]>(`${api}/importar`, { method: 'POST', body: JSON.stringify(cs) }),
+    replaceAll: (cs) => request<Candidate[]>(api, { method: 'PUT', body: JSON.stringify(cs) }),
   };
 }

@@ -45,3 +45,40 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
     </div>
   );
 }
+
+interface WelcomeStateProps {
+  onAdd: () => void;
+  onImport: () => void;
+  onSample: () => void;
+}
+
+/** Primera vez que se abre el programa: tres caminos claros para empezar. */
+export function WelcomeState({ onAdd, onImport, onSample }: WelcomeStateProps) {
+  return (
+    <div className="welcome">
+      <h2 className="welcome__title">Bienvenido al filtro de postulantes</h2>
+      <p className="welcome__text">
+        Registre los CVs que llegan al correo de reclutamiento. El programa revisa solo los requisitos de la convocatoria y le
+        muestra quién es apto.
+      </p>
+      <div className="welcome__options">
+        <button type="button" className="welcome__option" onClick={onAdd}>
+          <span className="welcome__icon" aria-hidden="true">＋</span>
+          <strong>Agregar un postulante</strong>
+          <span className="muted">Llene un formulario con los datos del CV.</span>
+        </button>
+        <button type="button" className="welcome__option" onClick={onImport}>
+          <span className="welcome__icon" aria-hidden="true">⤒</span>
+          <strong>Importar desde Excel</strong>
+          <span className="muted">Suba muchos postulantes a la vez con la plantilla.</span>
+        </button>
+        <button type="button" className="welcome__option" onClick={onSample}>
+          <span className="welcome__icon" aria-hidden="true">▶</span>
+          <strong>Ver un ejemplo</strong>
+          <span className="muted">Cargue 180 postulantes ficticios para probar el programa.</span>
+        </button>
+      </div>
+      <p className="muted">Los datos se guardan en esta computadora. Use "Más → Copia de seguridad" para respaldarlos.</p>
+    </div>
+  );
+}

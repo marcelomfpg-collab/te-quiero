@@ -15,9 +15,11 @@ interface CandidateDrawerProps {
   row: IndexedCandidate;
   onClose: () => void;
   onUpdate: (id: string, patch: CandidatePatch) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-export function CandidateDrawer({ row, onClose, onUpdate }: CandidateDrawerProps) {
+export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete }: CandidateDrawerProps) {
   const { candidate: c, evaluation: e } = row;
   const [notes, setNotes] = useState(c.notes);
   useEffect(() => setNotes(c.notes), [c.id, c.notes]);
@@ -170,6 +172,15 @@ export function CandidateDrawer({ row, onClose, onUpdate }: CandidateDrawerProps
           onBlur={() => notes !== c.notes && onUpdate(c.id, { notes })}
         />
       </section>
+
+      <div className="drawer__footer">
+        <button type="button" className="btn btn--secondary" onClick={onEdit}>
+          Editar datos
+        </button>
+        <button type="button" className="btn btn--danger" onClick={onDelete}>
+          Eliminar postulante
+        </button>
+      </div>
     </Dialog>
   );
 }

@@ -1,0 +1,80 @@
+# Fabrica el programa "Becarios PACSI" y lo publica en la página de descargas (Releases).
+# Se ejecuta solo cuando cambia el código del programa, o a mano desde la pestaña Actions.
+name: Programa Becarios PACSI
+
+on:
+  push:
+    paths:
+      - 'pacsi-becarios/**'
+      - '.github/workflows/becarios-programa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: becarios-programa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pacsi-becarios
+        shell: bash
+    env:
+      VERSION: 1.0.${{ github.run_number }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # npm install (no ci) para resolver los binarios nativos propios de Windows.
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Fijar versión
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Construir instalador y versión portable
+        run: npm run dist:win
+
+      - name: Preparar archivos de descarga
+        run: |
+          mkdir -p ../descargas
+          cp release/Becarios-PACSI-Instalador-*.exe ../descargas/
+          cp release/Becarios-PACSI-Portable-*.exe ../descargas/
+          cp dist/index.html "../descargas/Becarios-PACSI-Navegador-$VERSION.html"
+          ls -la ../descargas
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: becarios-v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: Becarios PACSI 2027-A · versión ${{ env.VERSION }}
+          make_latest: true
+          files: descargas/*
+          body: |
+            ## Programa de filtro de postulantes · Becarios PACSI 2027-A
+
+            **¿Cuál descargo?**
+
+            | Archivo | Para quién |
+            |---|---|
+            | **Becarios-PACSI-Instalador-…exe** | Windows. Se instala con acceso directo en el escritorio. *(Recomendado)* |
+            | **Becarios-PACSI-Portable-…exe** | Windows sin instalar: doble clic y listo (sirve desde un USB). |
+            | **Becarios-PACSI-Navegador-…html** | Cualquier computadora (Windows, Mac, Linux): se abre con doble clic en Chrome o Edge. |
+
+            **Al abrirlo por primera vez en Windows** puede aparecer "Windows protegió su PC".
+            Haga clic en **Más información → Ejecutar de todas formas** (el programa no tiene firma digital comercial).
+
+            Los datos se guardan en la computadora donde se usa. Para pasarlos a otra PC:
+            menú **Más → Copia de seguridad**, y en la otra PC **Más → Restaurar copia de seguridad**.
