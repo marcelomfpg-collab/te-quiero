@@ -36,7 +36,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0a111d;
     --surface: #111b2b;
     --surface-2: #0d1624;
@@ -61,6 +61,31 @@
     --neutral-bg: #1a2638;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+    --bg: #0a111d;
+    --surface: #111b2b;
+    --surface-2: #0d1624;
+    --border: #1f2c40;
+    --border-strong: #33445c;
+    --text: #e6ebf2;
+    --text-muted: #9aa8bb;
+    --brand: #ef4d53;
+    --brand-hover: #f7757a;
+    --primary: #e6ebf2;
+    --primary-soft: #1c2c45;
+    --accent: #7fb0ff;
+    --ok: #4ade9b;
+    --ok-bg: #0b3324;
+    --warn: #fbbf4d;
+    --warn-bg: #3a2708;
+    --bad: #ff7b80;
+    --bad-bg: #3e1214;
+    --info: #8db8ff;
+    --info-bg: #15294a;
+    --neutral: #9aa8bb;
+    --neutral-bg: #1a2638;
+    color-scheme: dark;
 }
 
 /* ===== Base ===== */
@@ -382,3 +407,5 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .viewer__page { max-width: 100%; height: auto; box-shadow: var(--shadow); background: #fff; }
 .viewer__text { white-space: pre-wrap; background: var(--surface); padding: 16px; border-radius: var(--radius-sm); font: 13px/1.5 var(--font); }
 @media (max-width: 960px) { .welcome__options { grid-template-columns: repeat(2, minmax(0, 220px)); } }
+.demo-banner { margin: 0; }
+.welcome__option:disabled { opacity: .7; cursor: progress; }

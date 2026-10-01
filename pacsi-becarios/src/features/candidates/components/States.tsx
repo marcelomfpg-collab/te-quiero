@@ -47,6 +47,9 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 }
 
 interface WelcomeStateProps {
+  /** Solo en la versión de prueba. */
+  onSamples?: () => void;
+  samplesRunning?: boolean;
   /** Solo en el programa de escritorio. */
   onMail?: () => void;
   onUpload: () => void;
@@ -55,7 +58,7 @@ interface WelcomeStateProps {
 }
 
 /** Primera vez que se abre el programa: caminos claros para empezar. */
-export function WelcomeState({ onMail, onUpload, onAdd, onSample }: WelcomeStateProps) {
+export function WelcomeState({ onSamples, samplesRunning, onMail, onUpload, onAdd, onSample }: WelcomeStateProps) {
   return (
     <div className="welcome">
       <h2 className="welcome__title">Bienvenido al filtro de postulantes</h2>
@@ -64,6 +67,13 @@ export function WelcomeState({ onMail, onUpload, onAdd, onSample }: WelcomeState
         quién es apto. Lo que no logre leer queda marcado para que usted lo revise.
       </p>
       <div className="welcome__options">
+        {onSamples && (
+          <button type="button" className="welcome__option welcome__option--main" onClick={onSamples} disabled={samplesRunning}>
+            <span className="welcome__icon" aria-hidden="true">{samplesRunning ? '…' : '▶'}</span>
+            <strong>{samplesRunning ? 'Leyendo CVs…' : 'Probar con 4 CVs de ejemplo'}</strong>
+            <span className="muted">PDF y Word de prueba: vea qué detecta el lector.</span>
+          </button>
+        )}
         {onMail && (
           <button type="button" className="welcome__option welcome__option--main" onClick={onMail}>
             <span className="welcome__icon" aria-hidden="true">📥</span>
@@ -71,23 +81,25 @@ export function WelcomeState({ onMail, onUpload, onAdd, onSample }: WelcomeState
             <span className="muted">Baja solo los CVs del buzón de reclutamiento.</span>
           </button>
         )}
-        <button type="button" className={`welcome__option ${onMail ? '' : 'welcome__option--main'}`} onClick={onUpload}>
+        <button type="button" className={`welcome__option ${onMail || onSamples ? '' : 'welcome__option--main'}`} onClick={onUpload}>
           <span className="welcome__icon" aria-hidden="true">⤒</span>
-          <strong>Subir CVs en PDF</strong>
+          <strong>{onSamples ? 'Subir sus propios CVs' : 'Subir CVs en PDF'}</strong>
           <span className="muted">Elija los CVs descargados (muchos a la vez).</span>
         </button>
+        {!onSamples && (
         <button type="button" className="welcome__option" onClick={onAdd}>
           <span className="welcome__icon" aria-hidden="true">＋</span>
           <strong>Agregar a mano</strong>
           <span className="muted">Llene un formulario con los datos.</span>
         </button>
+        )}
         <button type="button" className="welcome__option" onClick={onSample}>
           <span className="welcome__icon" aria-hidden="true">▶</span>
           <strong>Ver un ejemplo</strong>
           <span className="muted">180 postulantes ficticios para probar.</span>
         </button>
       </div>
-      <p className="muted">Los datos y CVs se guardan en esta computadora. Use "Más → Copia de seguridad" para respaldarlos.</p>
+      {!onSamples && <p className="muted">Los datos y CVs se guardan en esta computadora. Use "Más → Copia de seguridad" para respaldarlos.</p>}
     </div>
   );
 }

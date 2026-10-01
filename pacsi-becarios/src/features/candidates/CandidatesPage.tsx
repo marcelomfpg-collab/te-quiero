@@ -7,6 +7,7 @@ import type { Candidate } from '../../domain/types';
 import type { CandidateRepository } from '../../services';
 import { fromBackup, toBackup } from '../../services/backup';
 import { generateMockCandidates } from '../../services/mockData';
+import { ask, DEMO, sampleCvFiles } from '../../demo';
 import { clearProcessedIds, importCvFiles, syncMailbox, type MailSyncSummary } from '../../cv/importCvs';
 import { fileStore } from '../../lib/fileStore';
 import type { CandidateFile } from '../../domain/types';
@@ -114,7 +115,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
 
   const deleteSelected = () => {
     if (!selected) return;
-    if (!window.confirm(`¿Eliminar a ${selected.fullName}? Esta acción no se puede deshacer.`)) return;
+    if (!ask(`¿Eliminar a ${selected.fullName}? Esta acción no se puede deshacer.`)) return;
     for (const f of selected.candidate.files ?? []) void fileStore.remove(f.id).catch(() => undefined);
     void load.remove(selected.candidate.id);
     setSelectedId(null);
@@ -131,12 +132,12 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   };
 
   const loadSample = () => {
-    if (load.data?.length && !window.confirm('Esto reemplaza los datos actuales por 180 postulantes de ejemplo. ¿Continuar?')) return;
+    if (load.data?.length && !ask('Esto reemplaza los datos actuales por 180 postulantes de ejemplo. ¿Continuar?')) return;
     void replaceData(generateMockCandidates(today), 'Se cargaron 180 postulantes de ejemplo.');
   };
 
   const clearAll = () => {
-    if (!window.confirm('¿Borrar TODOS los postulantes y CVs de esta computadora? Haga antes una copia de seguridad.')) return;
+    if (!ask('¿Borrar TODOS los postulantes y CVs de esta computadora? Haga antes una copia de seguridad.')) return;
     void fileStore.clear().catch(() => undefined);
     clearProcessedIds();
     void replaceData([], 'Se borraron todos los postulantes.');
@@ -147,10 +148,24 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
       .text()
       .then((text) => {
         const candidates = fromBackup(text);
-        if (!window.confirm(`La copia tiene ${candidates.length} postulantes y reemplazará los datos actuales. ¿Continuar?`)) return;
+        if (!ask(`La copia tiene ${candidates.length} postulantes y reemplazará los datos actuales. ¿Continuar?`)) return;
         void replaceData(candidates, `Copia restaurada: ${candidates.length} ${candidates.length === 1 ? "postulante" : "postulantes"}.`);
       })
       .catch((error: unknown) => notifyError(messageOf(error, 'No se pudo leer la copia de seguridad.')));
+  };
+
+  const [sampleRunning, setSampleRunning] = useState(false);
+  /** Versión de prueba: lee 4 CVs de ejemplo con el lector real. */
+  const trySamples = async () => {
+    setSampleRunning(true);
+    try {
+      const summary = await importCvs(await sampleCvFiles(), () => undefined);
+      setToast({ text: `Se leyeron ${summary.created.length} CVs de ejemplo. Abra cada uno para ver qué detectó.`, tone: 'ok' });
+    } catch (error) {
+      notifyError(messageOf(error, 'No se pudieron leer los CVs de ejemplo.'));
+    } finally {
+      setSampleRunning(false);
+    }
   };
 
   const importCvs = async (files: File[], onProgress: (m: string) => void) => {
@@ -197,11 +212,11 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
     <div className="page">
       <header className="page__header">
         <div className="brand">
-          <span className="brand__mark" aria-hidden="true">P</span>
+          {!DEMO && <span className="brand__mark" aria-hidden="true">P</span>}
           <div>
-            <p className="page__eyebrow">Pacsi Ingenieros S.A.C. · Reclutamiento</p>
+            <p className="page__eyebrow">{DEMO ? 'Versión de prueba · Reclutamiento' : 'Pacsi Ingenieros S.A.C. · Reclutamiento'}</p>
             <h1 className="page__title">
-              {CONVOCATORIA.name} <span className="page__subtitle">Filtro de postulantes</span>
+              {DEMO ? 'Becarios 2027-A' : CONVOCATORIA.name} <span className="page__subtitle">Filtro de postulantes</span>
             </h1>
           </div>
         </div>
@@ -217,9 +232,12 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           <button type="button" className="btn btn--secondary" onClick={() => setForm('new')} disabled={!hasData}>
             ＋ Nuevo
           </button>
-          <button type="button" className="btn btn--secondary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
+          {!DEMO && <button type="button" className="btn btn--secondary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
             Exportar ({sorted.length.toLocaleString('es-PE')})
-          </button>
+          </button>}
+          {DEMO ? (
+            <button type="button" className="btn btn--secondary" onClick={loadSample}>Ver 180 de ejemplo</button>
+          ) : (
           <Popover label="Más" align="end" closeOnSelect>
             <div className="menu">
               {desktop && (
@@ -250,8 +268,16 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
               </button>
             </div>
           </Popover>
+          )}
         </div>
       </header>
+
+      {DEMO && (
+        <p className="banner banner--info demo-banner">
+          Versión de prueba en línea: los datos no se guardan al cerrar la página. Puede probar con los CVs de ejemplo o subir sus
+          propios PDF; nada sale de su navegador.
+        </p>
+      )}
 
       <ConvocatoriaTimeline today={today} />
 
@@ -298,6 +324,8 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
 
         {isEmpty ? (
           <WelcomeState
+            onSamples={DEMO ? () => void trySamples() : undefined}
+            samplesRunning={sampleRunning}
             onMail={desktop ? openMail : undefined}
             onUpload={() => setCvImporting(true)}
             onAdd={() => setForm('new')}

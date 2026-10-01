@@ -5,3 +5,4 @@ release
 .env
 *.tsbuildinfo
 build/ocr
+dist-demo

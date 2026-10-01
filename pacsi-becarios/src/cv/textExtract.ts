@@ -4,6 +4,7 @@ import type { TextItem } from 'pdfjs-dist/types/src/display/api';
 import PdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&inline';
 
 pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
+import { DEMO } from '../demo';
 
 export type ExtractMethod = 'texto' | 'ocr' | 'word' | 'sin-soporte';
 
@@ -39,6 +40,7 @@ export async function extractText(data: ArrayBuffer, name: string, type: string,
     return { text: value, method: 'word' };
   }
   if (kind === 'imagen') {
+    if (DEMO) throw new Error('es una foto; la versión de prueba no lee imágenes, el programa de escritorio sí');
     onProgress?.('Leyendo imagen escaneada (OCR)…');
     return { text: await ocr(new Blob([data], { type })), method: 'ocr' };
   }
@@ -60,6 +62,7 @@ async function extractPdf(data: ArrayBuffer, onProgress?: ProgressFn): Promise<E
     if (text.replace(/\s/g, '').length >= MIN_TEXT) return { text, method: 'texto', pages: doc.numPages };
 
     // Sin texto seleccionable: es un escaneo o una foto. Se lee con OCR.
+    if (DEMO) throw new Error('es un CV escaneado; la versión de prueba no lee escaneados, el programa de escritorio sí');
     const ocrPages: string[] = [];
     const n = Math.min(doc.numPages, MAX_OCR_PAGES);
     for (let i = 1; i <= n; i++) {

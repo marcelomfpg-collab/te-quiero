@@ -28,8 +28,12 @@ async function readFiles(files: IncomingFile[], onProgress: ProgressFn, summary:
     if (result.method === 'ocr') summary.ocrUsed++;
     texts.push(result.text);
     const id = newId();
-    await fileStore.put(id, new Blob([f.data], { type: f.type || 'application/octet-stream' }));
-    stored.push({ id, name: f.name, type: f.type });
+    try {
+      await fileStore.put(id, new Blob([f.data], { type: f.type || 'application/octet-stream' }));
+      stored.push({ id, name: f.name, type: f.type });
+    } catch {
+      /* sin almacenamiento disponible: el postulante se crea igual, sin el archivo adjunto */
+    }
   }
   return { text: texts.join('\n\n'), stored };
 }
@@ -63,7 +67,8 @@ export async function importCvFiles(files: File[], existing: Candidate[], today:
       code++;
       summary.created.push(candidate);
     } catch (error) {
-      summary.skipped.push({ name: file.name, reason: `No se pudo leer el archivo (${(error as Error).message})` });
+      const msg = (error as Error).message;
+      summary.skipped.push({ name: file.name, reason: msg.startsWith('es ') ? `No se leyó: ${msg}` : `No se pudo leer el archivo (${msg})` });
     }
   }
   return summary;

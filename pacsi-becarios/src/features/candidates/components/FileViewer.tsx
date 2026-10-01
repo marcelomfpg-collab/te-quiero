@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CandidateFile } from '../../../domain/types';
 import { extractText, fileKind, pdfjs } from '../../../cv/textExtract';
 import { fileStore } from '../../../lib/fileStore';
+import { DEMO } from '../../../demo';
 import { Dialog } from './Dialog';
 
 /** Muestra el CV original (PDF página por página, imagen o texto de Word) dentro del programa. */
@@ -50,7 +51,7 @@ export function FileViewer({ file, onClose }: { file: CandidateFile; onClose: ()
 
   return (
     <Dialog title={file.name} eyebrow="CV original" variant="viewer" onClose={onClose}
-      header={blobUrl ? <a className="btn btn--link" href={blobUrl} download={file.name}>Descargar archivo</a> : undefined}>
+      header={blobUrl && !DEMO ? <a className="btn btn--link" href={blobUrl} download={file.name}>Descargar archivo</a> : undefined}>
       {state === 'loading' && <div className="progress"><span className="spinner" aria-hidden="true" /> Abriendo…</div>}
       {state === 'missing' && <p className="form-error">El archivo no está en esta computadora (puede venir de una copia de seguridad).</p>}
       {state === 'error' && <p className="form-error">No se pudo mostrar el archivo.</p>}
