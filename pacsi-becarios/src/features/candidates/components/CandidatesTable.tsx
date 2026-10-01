@@ -1,4 +1,4 @@
-import { CAREER_LABEL } from '../../../domain/catalogs';
+import { CAREER_LABEL, REQUIREMENT_SHORT } from '../../../domain/catalogs';
 import { formatShortDate } from '../../../lib/dates';
 import type { IndexedCandidate } from '../filters/filterEngine';
 import type { SortDir, SortKey } from '../filters/filterState';
@@ -104,7 +104,10 @@ export function CandidatesTable({ rows, sortKey, sortDir, busy, selectedId, onSo
                   </span>
                 </td>
                 <td data-label="Resultado">
-                  <EligibilityBadge value={e.eligibility} />
+                  <div className="result">
+                    <EligibilityBadge value={e.eligibility} />
+                    <ResultNote checks={e.checks} eligibility={e.eligibility} />
+                  </div>
                 </td>
                 <td data-label="Etapa">
                   <StageBadge value={c.stage} />
@@ -116,5 +119,19 @@ export function CandidatesTable({ rows, sortKey, sortDir, busy, selectedId, onSo
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Comentario corto bajo el resultado: qué le falta o por qué no es apto. */
+function ResultNote({ checks, eligibility }: { checks: IndexedCandidate['evaluation']['checks']; eligibility: string }) {
+  const failing = checks.filter((c) => c.mandatory && c.status === 'NO_CUMPLE');
+  const pending = checks.filter((c) => c.mandatory && c.status === 'PENDIENTE' && c.id !== 'HABILIDADES_BLANDAS');
+  const list = eligibility === 'NO_APTO' ? failing : eligibility === 'POR_EVALUAR' ? pending : [];
+  if (!list.length) return null;
+  const prefix = eligibility === 'NO_APTO' ? 'No cumple' : 'Falta';
+  return (
+    <span className="result__note" title={list.map((c) => c.detail).join('\n')}>
+      {prefix}: {list.map((c) => REQUIREMENT_SHORT[c.id]).join(', ')}
+    </span>
   );
 }

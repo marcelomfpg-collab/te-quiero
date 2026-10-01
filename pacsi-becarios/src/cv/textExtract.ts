@@ -6,7 +6,7 @@ import PdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&inline'
 pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
 import { DEMO } from '../demo';
 
-export type ExtractMethod = 'texto' | 'ocr' | 'word' | 'sin-soporte';
+export type ExtractMethod = 'texto' | 'ocr' | 'word' | 'word-antiguo' | 'sin-soporte';
 
 export interface ExtractResult {
   text: string;
@@ -22,10 +22,11 @@ export type ProgressFn = (message: string) => void;
 const MIN_TEXT = 80;
 const MAX_OCR_PAGES = 4;
 
-export function fileKind(name: string, type: string): 'pdf' | 'word' | 'imagen' | 'otro' {
+export function fileKind(name: string, type: string): 'pdf' | 'word' | 'word-antiguo' | 'imagen' | 'otro' {
   const n = name.toLowerCase();
   if (type === 'application/pdf' || n.endsWith('.pdf')) return 'pdf';
   if (n.endsWith('.docx') || type.includes('wordprocessingml')) return 'word';
+  if (n.endsWith('.doc') || type === 'application/msword') return 'word-antiguo';
   if (/^image\/(png|jpe?g|webp|bmp)$/.test(type) || /\.(png|jpe?g|webp|bmp)$/.test(n)) return 'imagen';
   return 'otro';
 }
@@ -39,17 +40,30 @@ export async function extractText(data: ArrayBuffer, name: string, type: string,
     const { value } = await mammoth.extractRawText({ arrayBuffer: data });
     return { text: value, method: 'word' };
   }
+  if (kind === 'word-antiguo') {
+    const { extractLegacyDocText } = await import('./docLegacy');
+    return { text: extractLegacyDocText(data), method: 'word-antiguo' };
+  }
   if (kind === 'imagen') {
-    if (DEMO) throw new Error('es una foto; la versión de prueba no lee imágenes, el programa de escritorio sí');
     onProgress?.('Leyendo imagen escaneada (OCR)…');
     return { text: await ocr(new Blob([data], { type })), method: 'ocr' };
   }
   return { text: '', method: 'sin-soporte' };
 }
 
+/** Mensajes claros para los PDF que no se pueden abrir. */
+function pdfOpenError(error: unknown): Error {
+  const e = error as { name?: string; message?: string };
+  if (e?.name === 'PasswordException') return new Error('el PDF tiene contraseña: ábralo, guárdelo sin contraseña ("Imprimir → Guardar como PDF") y súbalo de nuevo');
+  if (e?.name === 'InvalidPDFException' || /invalid pdf|corrupt/i.test(e?.message ?? '')) return new Error('el archivo está dañado o no es un PDF real (pida al postulante que lo vuelva a enviar)');
+  return new Error(`no se pudo abrir el PDF (${e?.message ?? 'error desconocido'})`);
+}
+
 async function extractPdf(data: ArrayBuffer, onProgress?: ProgressFn): Promise<ExtractResult> {
   const task = pdfjs.getDocument({ data: new Uint8Array(data.slice(0)) });
-  const doc = await task.promise;
+  const doc = await task.promise.catch((error: unknown) => {
+    throw pdfOpenError(error);
+  });
   try {
     const pages: string[] = [];
     for (let i = 1; i <= doc.numPages; i++) {
@@ -62,7 +76,6 @@ async function extractPdf(data: ArrayBuffer, onProgress?: ProgressFn): Promise<E
     if (text.replace(/\s/g, '').length >= MIN_TEXT) return { text, method: 'texto', pages: doc.numPages };
 
     // Sin texto seleccionable: es un escaneo o una foto. Se lee con OCR.
-    if (DEMO) throw new Error('es un CV escaneado; la versión de prueba no lee escaneados, el programa de escritorio sí');
     const ocrPages: string[] = [];
     const n = Math.min(doc.numPages, MAX_OCR_PAGES);
     for (let i = 1; i <= n; i++) {
@@ -157,16 +170,49 @@ type TesseractWorker = Awaited<ReturnType<typeof import('tesseract.js')['createW
 let workerPromise: Promise<TesseractWorker> | null = null;
 
 function getWorker(): Promise<TesseractWorker> {
-  workerPromise ??= import('tesseract.js').then(({ createWorker }) => {
-    // En el programa de escritorio los archivos del OCR van incluidos (funciona sin internet).
-    const paths = window.pacsiDesktop?.ocrPaths;
-    return createWorker('spa', 1, paths ? { ...paths, gzip: true } : { langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/spa/4.0.0' });
+  workerPromise ??= import('tesseract.js').then(async ({ createWorker }) => {
+    // Programa de escritorio: archivos del OCR incluidos (sin internet).
+    const desktop = window.pacsiDesktop?.ocrPaths;
+    if (desktop) return createWorker('spa', 1, { ...desktop, gzip: true });
+    // Versión de prueba en línea: los archivos del OCR se publican junto a la página (carpeta ocr/).
+    if (DEMO) {
+      const base = new URL('ocr/', document.baseURI).href;
+      // El modelo en español se publica como "spa-traineddata.wasm" (contenido gzip, extensión que el servidor sí entrega)
+      // y se deja en la caché del navegador, donde el lector lo busca antes de descargarlo.
+      await primeOcrCache(`${base}lang/spa-traineddata.wasm`);
+      return createWorker('spa', 1, { workerPath: `${base}worker.min.js`, corePath: `${base}core`, langPath: `${base}lang`, workerBlobURL: false, cacheMethod: 'readOnly' });
+    }
+    return createWorker('spa', 1, { langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/spa/4.0.0' });
   });
   return workerPromise;
 }
 
 async function ocr(image: Blob): Promise<string> {
-  const worker = await getWorker();
+  const worker = await getWorker().catch((error: unknown) => {
+    workerPromise = null; // permite reintentar
+    throw new Error(`no se pudo iniciar el lector de escaneados (${(error as Error)?.message ?? error})`);
+  });
   const { data } = await worker.recognize(image);
   return data.text;
+}
+
+/** Guarda el modelo del OCR en la misma caché (idb-keyval) que usa tesseract.js. */
+async function primeOcrCache(url: string): Promise<void> {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`no se pudo descargar el modelo de lectura (${resp.status})`);
+  const data = new Uint8Array(await resp.arrayBuffer());
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.open('keyval-store', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('keyval');
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const tx = req.result.transaction('keyval', 'readwrite');
+      tx.objectStore('keyval').put(data, './spa.traineddata');
+      tx.oncomplete = () => {
+        req.result.close();
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+  });
 }

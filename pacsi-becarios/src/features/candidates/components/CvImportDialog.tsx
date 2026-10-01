@@ -8,7 +8,7 @@ interface CvImportDialogProps {
   onClose: () => void;
 }
 
-const ACCEPT = '.pdf,.docx,.png,.jpg,.jpeg,application/pdf';
+const ACCEPT = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,application/pdf,application/msword';
 
 /** Subir CVs (PDF, Word o fotos): el programa los lee y evalúa solo. */
 export function CvImportDialog({ onImport, onClose }: CvImportDialogProps) {

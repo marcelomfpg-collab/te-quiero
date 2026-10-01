@@ -66,16 +66,21 @@ describe('normalizeRules / formatYears', () => {
   });
 });
 
-describe('valores por defecto más flexibles para Administración y Comercial', () => {
+describe('valores por defecto: Administración y Comercial quedan "por revisar"', () => {
   const r = defaultCareerRules();
-  it('Comercial: sin brevete ni experiencia sigue siendo APTO', () => {
+  it('Comercial sin brevete ni experiencia → POR REVISAR, con el comentario de lo que le falta', () => {
     const e = evaluateCandidate(makeCandidate({ career: 'COMERCIAL', license: 'NINGUNA', experienceMonths: 0, experienceCertified: false }), r);
-    expect(e.eligibility).toBe('APTO');
-    expect(e.checks.find((c) => c.id === 'BREVETE')).toMatchObject({ status: 'NO_CUMPLE', mandatory: false });
+    expect(e.eligibility).toBe('POR_EVALUAR');
+    expect(e.checks.find((c) => c.id === 'BREVETE')).toMatchObject({ status: 'PENDIENTE', detail: expect.stringMatching(/^Le falta: no cuenta con brevete/) });
+    expect(e.checks.find((c) => c.id === 'EXPERIENCIA')?.detail).toMatch(/^Le falta: 0 meses/);
   });
-  it('Administración: brevete no aplica y la experiencia es opcional', () => {
+  it('Comercial que sí cumple todo → APTO', () => {
+    expect(evaluateCandidate(makeCandidate({ career: 'COMERCIAL' }), r).eligibility).toBe('APTO');
+  });
+  it('Administración: brevete no aplica; experiencia insuficiente → por revisar', () => {
     const e = evaluateCandidate(makeCandidate({ career: 'ADMINISTRACION', license: 'NINGUNA', experienceMonths: 2, experienceCertified: false }), r);
-    expect(e.eligibility).toBe('APTO');
+    expect(e.checks.find((c) => c.id === 'BREVETE')?.status).toBe('NO_APLICA');
+    expect(e.eligibility).toBe('POR_EVALUAR');
   });
   it('pero Excel certificado y vivir en Arequipa siguen siendo excluyentes', () => {
     expect(evaluateCandidate(makeCandidate({ career: 'COMERCIAL', officeCertified: false }), r).eligibility).toBe('NO_APTO');

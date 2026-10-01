@@ -52,7 +52,7 @@ export async function importCvFiles(files: File[], existing: Candidate[], today:
   for (const [i, file] of files.entries()) {
     onProgress(`Leyendo ${i + 1} de ${files.length}: ${file.name}`);
     if (fileKind(file.name, file.type) === 'otro') {
-      summary.skipped.push({ name: file.name, reason: 'Formato no soportado (use PDF, Word .docx o imagen)' });
+      summary.skipped.push({ name: file.name, reason: 'Formato no soportado: use PDF, Word (.doc o .docx) o foto (JPG/PNG)' });
       continue;
     }
     try {
@@ -67,8 +67,8 @@ export async function importCvFiles(files: File[], existing: Candidate[], today:
       code++;
       summary.created.push(candidate);
     } catch (error) {
-      const msg = (error as Error).message;
-      summary.skipped.push({ name: file.name, reason: msg.startsWith('es ') ? `No se leyó: ${msg}` : `No se pudo leer el archivo (${msg})` });
+      const msg = (error as Error)?.message || String(error);
+      summary.skipped.push({ name: file.name, reason: `No se pudo leer: ${msg}` });
     }
   }
   return summary;

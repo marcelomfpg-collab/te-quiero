@@ -61,7 +61,7 @@ export function evaluateRequirements(c: Candidate, rules: CareerRules = defaultC
   return applyLevels(markMissing(baseRequirements(c, rule, cfg), c, rule), c, rule);
 }
 
-/** Excluyente: si falla, descarta. Opcional: solo informa. No aplica: no se pide a esta carrera. */
+/** Excluyente: si falla, descarta. Revisar: si falla, queda por revisar. Opcional: solo informa. No aplica: no se pide. */
 function applyLevels(checks: RequirementCheck[], c: Candidate, rule: CareerRule): RequirementCheck[] {
   const configurable = new Set<RequirementId>(CONFIGURABLE_REQUIREMENTS);
   return checks.map((check) => {
@@ -69,6 +69,9 @@ function applyLevels(checks: RequirementCheck[], c: Candidate, rule: CareerRule)
     const level = rule.levels[check.id as keyof CareerRule['levels']];
     if (level === 'NO_APLICA') return { ...check, status: 'NO_APLICA', mandatory: false, detail: `No se exige para ${CAREER_LABEL[c.career]}` };
     if (level === 'OPCIONAL') return { ...check, mandatory: false };
+    if (level === 'REVISAR' && check.status === 'NO_CUMPLE') {
+      return { ...check, status: 'PENDIENTE', mandatory: true, detail: `Le falta: ${check.detail.charAt(0).toLowerCase()}${check.detail.slice(1)}` };
+    }
     return { ...check, mandatory: true };
   });
 }

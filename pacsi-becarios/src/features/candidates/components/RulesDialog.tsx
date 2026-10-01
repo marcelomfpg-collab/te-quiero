@@ -25,6 +25,7 @@ const ROW_LABEL: Record<ConfigurableRequirement, string> = {
 
 const LEVELS: { value: RuleLevel; label: string }[] = [
   { value: 'EXCLUYENTE', label: 'Excluyente' },
+  { value: 'REVISAR', label: 'Revisar' },
   { value: 'OPCIONAL', label: 'Opcional' },
   { value: 'NO_APLICA', label: 'No aplica' },
 ];
@@ -64,7 +65,8 @@ export function RulesDialog({ rules, onSave, onClose }: RulesDialogProps) {
   return (
     <Dialog title="Requisitos por carrera" eyebrow="Qué tan estricto es cada requisito" variant="wide" onClose={onClose}>
       <p className="dialog__lead">
-        <strong>Excluyente:</strong> si no lo cumple, queda "No apto". <strong>Opcional:</strong> se muestra pero no descarta.{' '}
+        <strong>Excluyente:</strong> si no lo cumple, queda "No apto". <strong>Revisar:</strong> si no lo cumple, queda "Por
+        revisar" con el comentario de lo que le falta. <strong>Opcional:</strong> se muestra pero no descarta.{' '}
         <strong>No aplica:</strong> no se pide a esa carrera. El plazo y la carrera convocada siempre son excluyentes. Los cambios
         se aplican al instante a todos los postulantes.
       </p>

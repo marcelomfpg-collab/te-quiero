@@ -1,8 +1,11 @@
 import { CONVOCATORIA } from './convocatoria';
 import type { Career, RequirementId } from './types';
 
-/** Qué tan estricto es un requisito para una carrera. */
-export type RuleLevel = 'EXCLUYENTE' | 'OPCIONAL' | 'NO_APLICA';
+/**
+ * Qué tan estricto es un requisito para una carrera.
+ * REVISAR: si no lo cumple no se descarta; queda "Por revisar" con el comentario de lo que le falta.
+ */
+export type RuleLevel = 'EXCLUYENTE' | 'REVISAR' | 'OPCIONAL' | 'NO_APLICA';
 
 /** Requisitos que RR. HH. puede ajustar por carrera (plazo y carrera convocada siempre son excluyentes). */
 export const CONFIGURABLE_REQUIREMENTS = [
@@ -47,15 +50,16 @@ function rule(overrides: Partial<Record<ConfigurableRequirement, RuleLevel>> = {
 
 /**
  * Requisitos por defecto. Ingenierías técnicas: como el aviso (todo excluyente, carrera técnica opcional).
- * Administración y Comercial: más flexibles por decisión de RR. HH. (brevete y experiencia no descartan).
+ * Administración y Comercial: más flexibles por decisión de RR. HH.: si les falta brevete o experiencia
+ * no se descartan, quedan "Por revisar" con el comentario de lo que les falta.
  */
 export function defaultCareerRules(): CareerRules {
   return {
     MECANICA_MECATRONICA: rule(),
     ELECTRICA: rule(),
     INDUSTRIAL: rule(),
-    COMERCIAL: rule({ BREVETE: 'OPCIONAL', EXPERIENCIA: 'OPCIONAL' }),
-    ADMINISTRACION: rule({ BREVETE: 'NO_APLICA', EXPERIENCIA: 'OPCIONAL' }),
+    COMERCIAL: rule({ BREVETE: 'REVISAR', EXPERIENCIA: 'REVISAR' }),
+    ADMINISTRACION: rule({ BREVETE: 'NO_APLICA', EXPERIENCIA: 'REVISAR' }),
   };
 }
 
@@ -74,7 +78,7 @@ export function normalizeRules(input: unknown): CareerRules {
     const levels = { ...base[career].levels };
     for (const id of CONFIGURABLE_REQUIREMENTS) {
       const v = r.levels?.[id];
-      if (v === 'EXCLUYENTE' || v === 'OPCIONAL' || v === 'NO_APLICA') levels[id] = v;
+      if (v === 'EXCLUYENTE' || v === 'REVISAR' || v === 'OPCIONAL' || v === 'NO_APLICA') levels[id] = v;
     }
     const years = Array.isArray(r.studyYears) ? r.studyYears.filter((y) => Number.isInteger(y) && y >= 1 && y <= 7) : null;
     const months = Number(r.minExperienceMonths);

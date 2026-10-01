@@ -13,7 +13,7 @@
     "app": "npm run ocr && npm run build && electron .",
     "dist:win": "npm run ocr && npm run build && electron-builder --win --publish never",
     "ocr": "node scripts/copy-ocr.cjs",
-    "demo": "node scripts/embed-samples.cjs && VITE_DEMO=1 vite build --outDir dist-demo"
+    "demo": "node scripts/copy-ocr.cjs && node scripts/embed-samples.cjs && VITE_DEMO=1 vite build --outDir dist-demo"
   },
   "devDependencies": {
     "@tesseract.js-data/spa": "^1.0.0",
