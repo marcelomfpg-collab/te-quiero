@@ -23,7 +23,7 @@ export type VerifiableField =
   | 'technicalCareerCertified'
   | 'dni';
 
-export type CandidateSource = 'manual' | 'excel' | 'cv' | 'correo';
+export type CandidateSource = 'manual' | 'excel' | 'cv' | 'correo' | 'ejemplo';
 
 /** Archivo adjunto (CV, certificados) guardado en la computadora. */
 export interface CandidateFile {

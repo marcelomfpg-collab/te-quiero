@@ -23,7 +23,7 @@ interface CandidateDrawerProps {
 
 /** Datos de sí/no que se pueden confirmar con un clic. */
 const BOOLEAN_FIELDS: VerifiableField[] = ['officeCertified', 'experienceCertified', 'technicalCareerCertified'];
-const SOURCE_LABEL = { manual: 'Registrado a mano', excel: 'Importado de Excel', cv: 'Leído del CV', correo: 'Llegó por correo' } as const;
+const SOURCE_LABEL = { manual: 'Registrado a mano', excel: 'Importado de Excel', cv: 'Leído del CV', correo: 'Llegó por correo', ejemplo: 'CV de ejemplo (ficticio)' } as const;
 
 export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete, onViewFile }: CandidateDrawerProps) {
   const { candidate: c, evaluation: e } = row;

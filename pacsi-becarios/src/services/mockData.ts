@@ -54,6 +54,7 @@ export function generateMockCandidates(today: string, count = 180, seed = 2027):
         : `Postulación prácticas ${firstNames} ${lastNames}`,
       stage,
       notes: '',
+      source: 'ejemplo',
     };
   });
   // Coherencia con la regla de la UI: un "No apto" nunca llega a entrevista.

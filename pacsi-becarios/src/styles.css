@@ -429,3 +429,4 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .dialog__actions--split { justify-content: space-between; align-items: center; flex-wrap: wrap; }
 .dialog__actions-group { display: flex; gap: 8px; }
 .btn.is-custom { border-color: var(--accent); color: var(--accent); }
+.banner--example { margin: 0; justify-content: space-between; border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); border-radius: var(--radius-sm); background: var(--warn-bg); color: var(--text); }

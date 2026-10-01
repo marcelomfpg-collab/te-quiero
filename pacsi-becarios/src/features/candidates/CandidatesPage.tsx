@@ -165,13 +165,32 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const trySamples = async () => {
     setSampleRunning(true);
     try {
-      const summary = await importCvs(await sampleCvFiles(), () => undefined);
+      const summary = await importCvFiles(await sampleCvFiles(), load.data ?? [], today, () => undefined);
+      const examples = summary.created.map((c) => ({ ...c, source: 'ejemplo' as const }));
+      if (examples.length) await load.importMany(examples);
       setToast({ text: `Se leyeron ${summary.created.length} CVs de ejemplo. Abra cada uno para ver qué detectó.`, tone: 'ok' });
     } catch (error) {
       notifyError(messageOf(error, 'No se pudieron leer los CVs de ejemplo.'));
     } finally {
       setSampleRunning(false);
     }
+  };
+
+  const exampleCount = load.data?.filter((c) => c.source === 'ejemplo').length ?? 0;
+
+  /** Quita los postulantes ficticios y deja la lista como estaba (o vacía, de vuelta al inicio). */
+  const removeExamples = async () => {
+    const all = load.data ?? [];
+    for (const c of all) if (c.source === 'ejemplo') for (const f of c.files ?? []) void fileStore.remove(f.id).catch(() => undefined);
+    setSelectedId(null);
+    await replaceData(all.filter((c) => c.source !== 'ejemplo'), 'Se quitaron los ejemplos.');
+  };
+
+  /** Versión de prueba: borra todo y vuelve a la pantalla de inicio. */
+  const startOver = async () => {
+    void fileStore.clear().catch(() => undefined);
+    setSelectedId(null);
+    await replaceData([], 'Listo, empezó de nuevo.');
   };
 
   const importCvs = async (files: File[], onProgress: (m: string) => void) => {
@@ -245,7 +264,11 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
             Exportar ({sorted.length.toLocaleString('es-PE')})
           </button>}
           {DEMO ? (
-            <button type="button" className="btn btn--secondary" onClick={loadSample}>Ver 180 de ejemplo</button>
+            !isEmpty && hasData && (
+              <button type="button" className="btn btn--secondary" onClick={() => void startOver()}>
+                ↺ Volver al inicio
+              </button>
+            )
           ) : (
           <Popover label="Más" align="end" closeOnSelect>
             <div className="menu">
@@ -286,6 +309,17 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           Versión de prueba en línea: los datos no se guardan al cerrar la página. Puede probar con los CVs de ejemplo o subir sus
           propios PDF; nada sale de su navegador.
         </p>
+      )}
+
+      {exampleCount > 0 && (
+        <div className="banner banner--example" role="status">
+          <span>
+            Está viendo <strong>{exampleCount} postulante{exampleCount === 1 ? '' : 's'} de ejemplo</strong> (ficticios).
+          </span>
+          <button type="button" className="btn btn--small btn--secondary" onClick={() => void removeExamples()}>
+            Quitar ejemplos{exampleCount === load.data?.length ? ' y volver al inicio' : ''}
+          </button>
+        </div>
       )}
 
       <ConvocatoriaTimeline today={today} />
