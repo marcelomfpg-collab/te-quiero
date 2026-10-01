@@ -409,3 +409,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 960px) { .welcome__options { grid-template-columns: repeat(2, minmax(0, 220px)); } }
 .demo-banner { margin: 0; }
 .welcome__option:disabled { opacity: .7; cursor: progress; }
+
+/* ===== Requisitos por carrera ===== */
+.wide { position: fixed; z-index: 45; inset: 16px; margin: auto; max-width: 1100px; height: fit-content; max-height: calc(100vh - 32px); background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; animation: fade .15s ease-out; }
+.rules-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.rules { width: 100%; border-collapse: collapse; min-width: 760px; }
+.rules th, .rules td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+.rules thead th { background: var(--surface-2); font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
+.rules tbody th { font-weight: 600; font-size: 13px; max-width: 200px; }
+.rules__param th, .rules__param td { background: var(--surface-2); }
+.level { width: 100%; height: 32px; padding: 0 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-weight: 600; font-size: 13px; background: var(--surface); }
+.level--excluyente { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--border)); }
+.level--opcional { color: var(--info); border-color: color-mix(in srgb, var(--info) 45%, var(--border)); }
+.level--no_aplica { color: var(--text-muted); }
+.years { display: flex; flex-wrap: wrap; gap: 3px; }
+.year { min-width: 30px; height: 26px; padding: 0 4px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); font-size: 12px; cursor: pointer; color: var(--text-muted); }
+.year.is-on { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
+.months { width: 70px; height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); }
+.dialog__actions--split { justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.dialog__actions-group { display: flex; gap: 8px; }
+.btn.is-custom { border-color: var(--accent); color: var(--accent); }

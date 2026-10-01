@@ -93,8 +93,8 @@ export function ImportResultView({ summary, extra }: { summary: ImportSummary; e
       {summary.ocrUsed > 0 && <p className="muted">{summary.ocrUsed} CV(s) escaneado(s) leídos con OCR: conviene revisarlos.</p>}
       {extra}
       {summary.skipped.length > 0 && (
-        <details className="skipped">
-          <summary>{summary.skipped.length} archivo(s) omitido(s)</summary>
+        <details className="skipped" open>
+          <summary>{summary.skipped.length} archivo(s) no se leyeron — motivo:</summary>
           <ul>
             {summary.skipped.map((s, i) => (
               <li key={i}>

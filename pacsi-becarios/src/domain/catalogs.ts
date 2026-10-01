@@ -50,13 +50,13 @@ export const ELIGIBILITIES: Option<Eligibility>[] = [
 export const REQUIREMENTS: Option<RequirementId>[] = [
   { value: 'PLAZO', label: 'Postuló dentro del plazo' },
   { value: 'CARRERA', label: 'Carrera convocada' },
-  { value: 'ANIO_ESTUDIO', label: 'Cursa 3er, 4to o 5to año' },
+  { value: 'ANIO_ESTUDIO', label: 'Año de carrera' },
   { value: 'BREVETE', label: 'Brevete A-I / A-IIb' },
-  { value: 'CARRERA_TECNICA', label: 'Carrera técnica certificada (opcional)' },
+  { value: 'CARRERA_TECNICA', label: 'Carrera técnica certificada' },
   { value: 'OFIMATICA', label: 'Ofimática / Excel certificado' },
   { value: 'HABILIDADES_BLANDAS', label: 'Habilidades blandas' },
   { value: 'SEDE_AREQUIPA', label: 'Prácticas preprofesionales en Arequipa' },
-  { value: 'EXPERIENCIA', label: 'Experiencia ≥ 6 meses certificada' },
+  { value: 'EXPERIENCIA', label: 'Experiencia laboral certificada' },
 ];
 
 export const STUDY_YEARS: Option<string>[] = [1, 2, 3, 4, 5, 6].map((y) => ({ value: String(y), label: `${y}° año` }));

@@ -3,7 +3,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 interface DialogProps {
   title: string;
   eyebrow?: string;
-  variant?: 'drawer' | 'modal' | 'viewer';
+  variant?: 'drawer' | 'modal' | 'viewer' | 'wide';
   onClose: () => void;
   children: ReactNode;
   header?: ReactNode;

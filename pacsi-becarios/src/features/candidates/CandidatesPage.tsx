@@ -19,6 +19,9 @@ import { CvImportDialog, ImportResultView } from './components/CvImportDialog';
 import { Dialog } from './components/Dialog';
 import { FileViewer } from './components/FileViewer';
 import { MailDialog } from './components/MailDialog';
+import { RulesDialog } from './components/RulesDialog';
+import { useCareerRules } from './hooks/useCareerRules';
+import { defaultCareerRules, sameRules } from '../../domain/careerRules';
 import { ConvocatoriaTimeline } from './components/ConvocatoriaTimeline';
 import { EligibilitySummary } from './components/EligibilitySummary';
 import { ImportDialog } from './components/ImportDialog';
@@ -69,6 +72,9 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   /** null = cerrado, 'new' = alta, o el postulante que se edita. */
   const [form, setForm] = useState<'new' | Candidate | null>(null);
   const [cvImporting, setCvImporting] = useState(false);
+  const [rules, saveRules] = useCareerRules();
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const customRules = !sameRules(rules, defaultCareerRules());
   const [viewing, setViewing] = useState<CandidateFile | null>(null);
   const [mailSettings, setMailSettings] = useState(false);
   const [sync, setSync] = useState<{ progress: string | null; summary: MailSyncSummary | null; error?: string } | null>(null);
@@ -88,7 +94,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   }, [toast]);
 
   // 1) Evaluación de requisitos: solo cuando cambian los datos.
-  const index = useMemo(() => (load.data ? buildIndex(load.data) : []), [load.data]);
+  const index = useMemo(() => (load.data ? buildIndex(load.data, rules) : []), [load.data, rules]);
   // 2) Filtrado + orden diferidos: la UI nunca se bloquea mientras se escribe.
   const deferred = useDeferredValue(filters);
   const { rows, facets } = useMemo(() => runQuery(index, deferred), [index, deferred]);
@@ -231,6 +237,9 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           </button>
           <button type="button" className="btn btn--secondary" onClick={() => setForm('new')} disabled={!hasData}>
             ＋ Nuevo
+          </button>
+          <button type="button" className={`btn btn--secondary ${customRules ? 'is-custom' : ''}`} onClick={() => setRulesOpen(true)}>
+            ⚙ Requisitos por carrera{customRules && <span className="btn__count" title="Requisitos ajustados">✓</span>}
           </button>
           {!DEMO && <button type="button" className="btn btn--secondary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
             Exportar ({sorted.length.toLocaleString('es-PE')})
@@ -418,6 +427,16 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
             </div>
           )}
         </Dialog>
+      )}
+      {rulesOpen && (
+        <RulesDialog
+          rules={rules}
+          onClose={() => setRulesOpen(false)}
+          onSave={(next) => {
+            saveRules(next);
+            setToast({ text: 'Requisitos actualizados: los resultados ya se recalcularon.', tone: 'ok' });
+          }}
+        />
       )}
       {viewing && <FileViewer file={viewing} onClose={() => setViewing(null)} />}
       {importing && load.data && <ImportDialog existing={load.data} today={today} onImport={handleImport} onClose={closeImport} />}

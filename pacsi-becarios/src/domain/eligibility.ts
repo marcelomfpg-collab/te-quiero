@@ -1,4 +1,5 @@
 import { CAREER_LABEL, LICENSE_LABEL } from './catalogs';
+import { CONFIGURABLE_REQUIREMENTS, defaultCareerRules, formatYears, ruleFor, type CareerRule, type CareerRules } from './careerRules';
 import { CONVOCATORIA } from './convocatoria';
 import { checkSubject } from './subject';
 import type { Candidate, Eligibility, Evaluation, RequirementCheck, RequirementId, RequirementStatus, VerifiableField } from './types';
@@ -37,7 +38,7 @@ const FIELD_LABEL: Record<VerifiableField, string> = {
  * Un dato que el lector no encontró nunca descarta al postulante:
  * su requisito queda PENDIENTE hasta que una persona lo confirme.
  */
-function markMissing(checks: RequirementCheck[], c: Candidate): RequirementCheck[] {
+function markMissing(checks: RequirementCheck[], c: Candidate, rule: CareerRule): RequirementCheck[] {
   if (!c.missing?.length) return checks;
   const missing = new Set(c.missing);
   return checks.map((check) => {
@@ -45,23 +46,38 @@ function markMissing(checks: RequirementCheck[], c: Candidate): RequirementCheck
     if (!fields.length || check.status === 'NO_APLICA') return check;
     // Si con los datos conocidos ya se incumple (p. ej. 3 meses de experiencia), se mantiene el NO_CUMPLE.
     if (check.status === 'NO_CUMPLE' && check.id === 'EXPERIENCIA' && !missing.has('experienceMonths')) {
-      return c.experienceMonths < CONVOCATORIA.minExperienceMonths ? check : { ...check, status: 'PENDIENTE', detail: `${c.experienceMonths} meses · revisar ${FIELD_LABEL.experienceCertified}` };
+      return c.experienceMonths < rule.minExperienceMonths ? check : { ...check, status: 'PENDIENTE', detail: `${c.experienceMonths} meses · revisar ${FIELD_LABEL.experienceCertified}` };
     }
     return { ...check, status: 'PENDIENTE', detail: `No se encontró ${fields.map((f) => FIELD_LABEL[f]).join(' ni ')} en el CV: revisar` };
   });
 }
 
-/** Evalúa un requisito por cada punto del aviso, en el mismo orden. */
-export function evaluateRequirements(c: Candidate, cfg: Config = CONVOCATORIA): RequirementCheck[] {
-  return markMissing(baseRequirements(c, cfg), c);
+/**
+ * Evalúa un requisito por cada punto del aviso, en el mismo orden, aplicando
+ * lo estricto que RR. HH. definió para la carrera del postulante.
+ */
+export function evaluateRequirements(c: Candidate, rules: CareerRules = defaultCareerRules(), cfg: Config = CONVOCATORIA): RequirementCheck[] {
+  const rule = ruleFor(rules, c.career);
+  return applyLevels(markMissing(baseRequirements(c, rule, cfg), c, rule), c, rule);
 }
 
-function baseRequirements(c: Candidate, cfg: Config): RequirementCheck[] {
+/** Excluyente: si falla, descarta. Opcional: solo informa. No aplica: no se pide a esta carrera. */
+function applyLevels(checks: RequirementCheck[], c: Candidate, rule: CareerRule): RequirementCheck[] {
+  const configurable = new Set<RequirementId>(CONFIGURABLE_REQUIREMENTS);
+  return checks.map((check) => {
+    if (!configurable.has(check.id) || c.career === 'OTRA') return check;
+    const level = rule.levels[check.id as keyof CareerRule['levels']];
+    if (level === 'NO_APLICA') return { ...check, status: 'NO_APLICA', mandatory: false, detail: `No se exige para ${CAREER_LABEL[c.career]}` };
+    if (level === 'OPCIONAL') return { ...check, mandatory: false };
+    return { ...check, mandatory: true };
+  });
+}
+
+function baseRequirements(c: Candidate, rule: CareerRule, cfg: Config): RequirementCheck[] {
   const inProfile = cfg.careers.includes(c.career);
-  const licenseExempt = cfg.licenseExemptCareers.includes(c.career);
   const inCity = c.city.trim().toLowerCase() === cfg.city.toLowerCase();
   const isPre = c.practiceType === 'PREPROFESIONAL';
-  const expOk = c.experienceMonths >= cfg.minExperienceMonths;
+  const expOk = c.experienceMonths >= rule.minExperienceMonths;
 
   return [
     c.submittedAt <= cfg.deadline
@@ -72,19 +88,17 @@ function baseRequirements(c: Candidate, cfg: Config): RequirementCheck[] {
       ? check('CARRERA', 'CUMPLE', CAREER_LABEL[c.career])
       : check('CARRERA', 'NO_CUMPLE', `${c.careerName || 'Carrera'} no está convocada`),
 
-    cfg.studyYears.includes(c.studyYear)
+    rule.studyYears.includes(c.studyYear)
       ? check('ANIO_ESTUDIO', 'CUMPLE', `Cursa ${c.studyYear}° año`)
-      : check('ANIO_ESTUDIO', 'NO_CUMPLE', `Cursa ${c.studyYear}° año (se requiere 3° a 5°)`),
+      : check('ANIO_ESTUDIO', 'NO_CUMPLE', `Cursa ${c.studyYear}° año (se acepta ${formatYears(rule.studyYears)})`),
 
-    licenseExempt
-      ? check('BREVETE', 'NO_APLICA', 'No se exige para Administración')
-      : cfg.licenses.includes(c.license)
+    cfg.licenses.includes(c.license)
         ? check('BREVETE', 'CUMPLE', `Licencia ${LICENSE_LABEL[c.license]}`)
         : check('BREVETE', 'NO_CUMPLE', 'No cuenta con brevete A-I o A-IIb'),
 
     c.technicalCareerCertified
       ? check('CARRERA_TECNICA', 'CUMPLE', 'Tiene carrera técnica certificada', false)
-      : check('CARRERA_TECNICA', 'NO_CUMPLE', 'Sin carrera técnica (opcional, suma puntaje)', false),
+      : check('CARRERA_TECNICA', 'NO_CUMPLE', 'Sin carrera técnica (suma puntaje)', false),
 
     c.officeCertified
       ? check('OFIMATICA', 'CUMPLE', 'Curso certificado')
@@ -104,12 +118,14 @@ function baseRequirements(c: Candidate, cfg: Config): RequirementCheck[] {
           [!isPre && 'Busca prácticas profesionales', !inCity && `Reside en ${c.city || 'otra ciudad'}`].filter(Boolean).join(' · '),
         ),
 
-    expOk && c.experienceCertified
+    rule.minExperienceMonths === 0
+      ? check('EXPERIENCIA', 'CUMPLE', c.experienceMonths ? `${c.experienceMonths} meses` : 'No se pide experiencia mínima')
+      : expOk && c.experienceCertified
       ? check('EXPERIENCIA', 'CUMPLE', `${c.experienceMonths} meses certificados`)
       : check(
           'EXPERIENCIA',
           'NO_CUMPLE',
-          expOk ? `${c.experienceMonths} meses, pero sin certificado` : `${c.experienceMonths} meses (mínimo ${cfg.minExperienceMonths})`,
+          expOk ? `${c.experienceMonths} meses, pero sin certificado` : `${c.experienceMonths} meses (mínimo ${rule.minExperienceMonths})`,
         ),
   ];
 }
@@ -139,8 +155,8 @@ export function scoreCandidate(c: Candidate): Evaluation['scoreBreakdown'] {
   ];
 }
 
-export function evaluateCandidate(c: Candidate, cfg: Config = CONVOCATORIA): Evaluation {
-  const checks = evaluateRequirements(c, cfg);
+export function evaluateCandidate(c: Candidate, rules: CareerRules = defaultCareerRules(), cfg: Config = CONVOCATORIA): Evaluation {
+  const checks = evaluateRequirements(c, rules, cfg);
   const scoreBreakdown = scoreCandidate(c);
   const warnings: string[] = [];
   // Solo se revisa el asunto cuando el CV llegó por correo (o se registró el asunto).

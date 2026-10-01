@@ -1,4 +1,5 @@
 import { CAREER_LABEL, CAREERS, ELIGIBILITIES, REQUIREMENTS, SHIFTS, STAGES, STUDY_YEARS } from '../../../domain/catalogs';
+import { defaultCareerRules, type CareerRules } from '../../../domain/careerRules';
 import { evaluateCandidate } from '../../../domain/eligibility';
 import type { Candidate, Eligibility, Evaluation, RequirementId, Stage } from '../../../domain/types';
 import { compact, normalize, tokenize } from '../../../lib/text';
@@ -17,12 +18,12 @@ export interface IndexedCandidate {
   searchCompact: string;
 }
 
-export function buildIndex(candidates: readonly Candidate[]): IndexedCandidate[] {
+export function buildIndex(candidates: readonly Candidate[], rules: CareerRules = defaultCareerRules()): IndexedCandidate[] {
   const dniCount = new Map<string, number>();
   for (const c of candidates) dniCount.set(c.dni, (dniCount.get(c.dni) ?? 0) + 1);
 
   return candidates.map((candidate) => {
-    const evaluation = evaluateCandidate(candidate);
+    const evaluation = evaluateCandidate(candidate, rules);
     if ((dniCount.get(candidate.dni) ?? 0) > 1) evaluation.warnings.push('DNI duplicado: postuló más de una vez');
     const fullName = `${candidate.lastNames}, ${candidate.firstNames}`;
     const text = [candidate.code, fullName, candidate.firstNames, candidate.dni, candidate.email, candidate.phone, candidate.university, candidate.careerName, candidate.city].join(' ');
