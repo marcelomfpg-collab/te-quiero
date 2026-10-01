@@ -150,7 +150,7 @@ export function RulesDialog({ rules, onSave, onClose }: RulesDialogProps) {
 
       <div className="dialog__actions dialog__actions--split">
         <button type="button" className="btn btn--link" disabled={isDefault} onClick={() => setDraft(defaultCareerRules())}>
-          Volver a los requisitos del aviso
+          Volver a los valores por defecto
         </button>
         <div className="dialog__actions-group">
           <button type="button" className="btn btn--secondary" onClick={onClose}>

@@ -45,14 +45,17 @@ function rule(overrides: Partial<Record<ConfigurableRequirement, RuleLevel>> = {
   };
 }
 
-/** Valores del aviso oficial: todo excluyente, carrera técnica opcional y brevete no aplica a Administración. */
+/**
+ * Requisitos por defecto. Ingenierías técnicas: como el aviso (todo excluyente, carrera técnica opcional).
+ * Administración y Comercial: más flexibles por decisión de RR. HH. (brevete y experiencia no descartan).
+ */
 export function defaultCareerRules(): CareerRules {
   return {
     MECANICA_MECATRONICA: rule(),
     ELECTRICA: rule(),
     INDUSTRIAL: rule(),
-    COMERCIAL: rule(),
-    ADMINISTRACION: rule({ BREVETE: 'NO_APLICA' }),
+    COMERCIAL: rule({ BREVETE: 'OPCIONAL', EXPERIENCIA: 'OPCIONAL' }),
+    ADMINISTRACION: rule({ BREVETE: 'NO_APLICA', EXPERIENCIA: 'OPCIONAL' }),
   };
 }
 

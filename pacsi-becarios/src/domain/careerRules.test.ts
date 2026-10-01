@@ -65,3 +65,23 @@ describe('normalizeRules / formatYears', () => {
     expect(formatYears([3, 5])).toBe('3° y 5°');
   });
 });
+
+describe('valores por defecto más flexibles para Administración y Comercial', () => {
+  const r = defaultCareerRules();
+  it('Comercial: sin brevete ni experiencia sigue siendo APTO', () => {
+    const e = evaluateCandidate(makeCandidate({ career: 'COMERCIAL', license: 'NINGUNA', experienceMonths: 0, experienceCertified: false }), r);
+    expect(e.eligibility).toBe('APTO');
+    expect(e.checks.find((c) => c.id === 'BREVETE')).toMatchObject({ status: 'NO_CUMPLE', mandatory: false });
+  });
+  it('Administración: brevete no aplica y la experiencia es opcional', () => {
+    const e = evaluateCandidate(makeCandidate({ career: 'ADMINISTRACION', license: 'NINGUNA', experienceMonths: 2, experienceCertified: false }), r);
+    expect(e.eligibility).toBe('APTO');
+  });
+  it('pero Excel certificado y vivir en Arequipa siguen siendo excluyentes', () => {
+    expect(evaluateCandidate(makeCandidate({ career: 'COMERCIAL', officeCertified: false }), r).eligibility).toBe('NO_APTO');
+    expect(evaluateCandidate(makeCandidate({ career: 'ADMINISTRACION', city: 'Lima' }), r).eligibility).toBe('NO_APTO');
+  });
+  it('las ingenierías técnicas mantienen el aviso completo', () => {
+    expect(evaluateCandidate(makeCandidate({ career: 'ELECTRICA', experienceMonths: 0, experienceCertified: false }), r).eligibility).toBe('NO_APTO');
+  });
+});
