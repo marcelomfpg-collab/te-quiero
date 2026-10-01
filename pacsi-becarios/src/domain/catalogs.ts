@@ -43,7 +43,7 @@ export const STAGES: Option<Stage>[] = [
 
 export const ELIGIBILITIES: Option<Eligibility>[] = [
   { value: 'APTO', label: 'Apto' },
-  { value: 'POR_EVALUAR', label: 'Por evaluar' },
+  { value: 'POR_EVALUAR', label: 'Por revisar' },
   { value: 'NO_APTO', label: 'No apto' },
 ];
 

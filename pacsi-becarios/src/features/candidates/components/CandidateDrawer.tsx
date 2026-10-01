@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CAREER_LABEL, LICENSE_LABEL, PRACTICE_TYPE_LABEL, REQUIREMENT_LABEL, SHIFT_LABEL, STAGES } from '../../../domain/catalogs';
-import type { Stage } from '../../../domain/types';
+import { REQUIREMENT_FIELDS } from '../../../domain/eligibility';
+import type { CandidateFile, RequirementCheck, Stage, VerifiableField } from '../../../domain/types';
 import { formatDate } from '../../../lib/dates';
 import type { CandidatePatch } from '../../../services';
 import type { IndexedCandidate } from '../filters/filterEngine';
@@ -17,20 +18,40 @@ interface CandidateDrawerProps {
   onUpdate: (id: string, patch: CandidatePatch) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onViewFile: (file: CandidateFile) => void;
 }
 
-export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete }: CandidateDrawerProps) {
+/** Datos de sí/no que se pueden confirmar con un clic. */
+const BOOLEAN_FIELDS: VerifiableField[] = ['officeCertified', 'experienceCertified', 'technicalCareerCertified'];
+const SOURCE_LABEL = { manual: 'Registrado a mano', excel: 'Importado de Excel', cv: 'Leído del CV', correo: 'Llegó por correo' } as const;
+
+export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete, onViewFile }: CandidateDrawerProps) {
   const { candidate: c, evaluation: e } = row;
   const [notes, setNotes] = useState(c.notes);
+  const flagged = new Set([...(c.missing ?? []), ...(c.uncertain ?? [])]);
+
+  /** Confirma un dato revisado por la persona: deja de estar "por revisar". */
+  const confirm = (field: VerifiableField, value: boolean) =>
+    onUpdate(c.id, {
+      [field]: value,
+      missing: c.missing?.filter((f) => f !== field),
+      uncertain: c.uncertain?.filter((f) => f !== field),
+    });
+
+  const reviewOf = (check: RequirementCheck) => {
+    const fields = (REQUIREMENT_FIELDS[check.id] ?? []).filter((f) => flagged.has(f));
+    const evidence = (REQUIREMENT_FIELDS[check.id] ?? []).map((f) => c.evidence?.[f]).filter(Boolean) as string[];
+    return { fields, evidence };
+  };
   useEffect(() => setNotes(c.notes), [c.id, c.notes]);
 
   const data: [string, string][] = [
-    ['DNI', c.dni],
+    ['DNI', c.dni || '—'],
     ['Correo', c.email || '—'],
     ['Celular', c.phone || '—'],
     ['Carrera', c.career === 'OTRA' ? `${c.careerName} (fuera de perfil)` : CAREER_LABEL[c.career]],
-    ['Universidad', `${c.university} · ${c.studyYear}° año`],
-    ['Ciudad', c.city],
+    ['Universidad', [c.university, c.studyYear ? `${c.studyYear}° año` : ''].filter(Boolean).join(' · ') || '—'],
+    ['Ciudad', c.city || '—'],
     ['Prácticas', PRACTICE_TYPE_LABEL[c.practiceType]],
     ['Brevete', LICENSE_LABEL[c.license]],
     ['Experiencia', `${c.experienceMonths} meses${c.experienceCertified ? ' (certificada)' : ''}`],
@@ -62,6 +83,22 @@ export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete }: Ca
             ))}
           </ul>
         </div>
+      )}
+
+      {!!c.files?.length && (
+        <section className="drawer__section">
+          <h3 className="drawer__heading">CV y documentos</h3>
+          <div className="files">
+            {c.files.map((f) => (
+              <button key={f.id} type="button" className="file" onClick={() => onViewFile(f)}>
+                <span className="file__icon" aria-hidden="true">{f.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOC'}</span>
+                <span className="file__name">{f.name}</span>
+                <span className="file__action">Ver</span>
+              </button>
+            ))}
+          </div>
+          {c.source && <p className="hint">{SOURCE_LABEL[c.source]}</p>}
+        </section>
       )}
 
       <section className="drawer__section">
@@ -114,18 +151,38 @@ export function CandidateDrawer({ row, onClose, onUpdate, onEdit, onDelete }: Ca
       <section className="drawer__section">
         <h3 className="drawer__heading">Requisitos de la convocatoria</h3>
         <ul className="checklist-result">
-          {e.checks.map((check) => (
-            <li key={check.id} className={`checklist-result__item is-${check.status.toLowerCase()} ${check.mandatory ? '' : 'is-optional'}`}>
-              <span className="checklist-result__icon" aria-hidden="true">{STATUS_ICON[check.status]}</span>
-              <div>
-                <span className="checklist-result__label">
-                  {REQUIREMENT_LABEL[check.id]}
-                  {!check.mandatory && <span className="tag">Opcional</span>}
-                </span>
-                <span className="muted">{check.detail}</span>
-              </div>
-            </li>
-          ))}
+          {e.checks.map((check) => {
+            const review = reviewOf(check);
+            const boolField = review.fields.length === 1 && BOOLEAN_FIELDS.includes(review.fields[0]!) ? review.fields[0]! : null;
+            return (
+              <li key={check.id} className={`checklist-result__item is-${check.status.toLowerCase()} ${check.mandatory ? '' : 'is-optional'}`}>
+                <span className="checklist-result__icon" aria-hidden="true">{STATUS_ICON[check.status]}</span>
+                <div className="checklist-result__body">
+                  <span className="checklist-result__label">
+                    {REQUIREMENT_LABEL[check.id]}
+                    {!check.mandatory && <span className="tag">Opcional</span>}
+                    {review.fields.length > 0 && <span className="tag tag--review">🔍 Revisar</span>}
+                  </span>
+                  <span className="muted">{check.detail}</span>
+                  {review.evidence.map((ev) => (
+                    <q key={ev} className="evidence">{ev}</q>
+                  ))}
+                  {review.fields.length > 0 && (
+                    <div className="quick-confirm">
+                      {boolField ? (
+                        <>
+                          <button type="button" className="btn btn--small btn--ok" onClick={() => confirm(boolField, true)}>✓ Sí cumple</button>
+                          <button type="button" className="btn btn--small btn--danger" onClick={() => confirm(boolField, false)}>✕ No cumple</button>
+                        </>
+                      ) : (
+                        <button type="button" className="btn btn--small btn--secondary" onClick={onEdit}>Corregir datos</button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
 

@@ -82,7 +82,7 @@ export function CandidatesTable({ rows, sortKey, sortDir, busy, selectedId, onSo
                         </span>
                       )}
                     </span>
-                    <span className="muted">{[c.university, `DNI ${c.dni}`].filter(Boolean).join(' · ')}</span>
+                    <span className="muted">{[c.university, c.dni && `DNI ${c.dni}`].filter(Boolean).join(' · ') || 'Datos por revisar'}</span>
                   </div>
                 </td>
                 <td data-label="Carrera">
@@ -91,7 +91,7 @@ export function CandidatesTable({ rows, sortKey, sortDir, busy, selectedId, onSo
                     {c.career === 'OTRA' && <span className="muted">Fuera de perfil</span>}
                   </div>
                 </td>
-                <td data-label="Año" className="col--num">{c.studyYear}°</td>
+                <td data-label="Año" className="col--num">{c.studyYear ? `${c.studyYear}°` : '—'}</td>
                 <td data-label="Requisitos">
                   <RequirementDots checks={e.checks} />
                 </td>

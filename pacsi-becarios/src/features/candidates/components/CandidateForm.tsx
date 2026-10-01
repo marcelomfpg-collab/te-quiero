@@ -15,7 +15,7 @@ interface CandidateFormProps {
   onClose: () => void;
 }
 
-type Values = Omit<Candidate, 'id' | 'code' | 'stage' | 'notes' | 'softSkills'>;
+type Values = Omit<Candidate, 'id' | 'code' | 'stage' | 'notes' | 'softSkills' | 'missing' | 'uncertain' | 'evidence' | 'files' | 'source' | 'emailMessageId'>;
 
 function emptyValues(today: string): Values {
   return {
@@ -45,6 +45,7 @@ export function validateValues(v: Values, existing: Candidate[], editingId?: str
   const errors: Record<string, string> = {};
   if (!v.firstNames.trim()) errors.firstNames = 'Ingrese los nombres';
   if (!v.lastNames.trim()) errors.lastNames = 'Ingrese los apellidos';
+  if (v.studyYear < 1) errors.studyYear = 'Indique el año que cursa';
   if (!/^\d{8}$/.test(v.dni)) errors.dni = 'El DNI debe tener 8 dígitos';
   else if (existing.some((c) => c.dni === v.dni && c.id !== editingId)) errors.dni = 'Ya hay un postulante con este DNI';
   if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) errors.email = 'Correo inválido';
@@ -55,7 +56,14 @@ export function validateValues(v: Values, existing: Candidate[], editingId?: str
 }
 
 export function CandidateForm({ initial, existing, today, onSave, onClose }: CandidateFormProps) {
-  const [values, setValues] = useState<Values>(() => (initial ? { ...initial } : emptyValues(today)));
+  const [values, setValues] = useState<Values>(() => {
+    if (!initial) return emptyValues(today);
+    const { id: _id, code: _c, stage: _s, notes: _n, softSkills: _ss, missing: _m, uncertain: _u, evidence: _e, files: _f, source: _src, emailMessageId: _mid, ...rest } = initial;
+    return rest;
+  });
+  /** Datos que el lector de CVs no encontró o no está seguro: se resaltan para revisarlos. */
+  const flagged = new Set<string>([...(initial?.missing ?? []), ...(initial?.uncertain ?? [])]);
+  const flag = (key: string) => (flagged.has(key) ? ' 🔍' : '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -70,8 +78,9 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
     setSaving(true);
     setSaveError(null);
     const careerName = values.career === 'OTRA' ? values.careerName.trim() : CAREER_LABEL[values.career];
+    // Al guardar, la persona confirma los datos: dejan de estar "por revisar".
     const candidate: Candidate = initial
-      ? { ...initial, ...values, careerName }
+      ? { ...initial, ...values, careerName, missing: [], uncertain: [] }
       : { ...values, careerName, id: newId(), code: formatCode(maxCodeNumber(existing) + 1), stage: 'RECIBIDO', notes: '', softSkills: null };
     try {
       await onSave(candidate);
@@ -83,8 +92,8 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
   };
 
   const text = (key: keyof Values, label: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
-    <label className="field">
-      <span className="field__label">{label}</span>
+    <label className={`field ${flagged.has(key) ? 'is-flagged' : ''}`}>
+      <span className="field__label">{label}{flag(key)}</span>
       <input
         value={String(values[key] ?? '')}
         aria-invalid={!!errors[key]}
@@ -96,15 +105,20 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
   );
 
   const check = (key: 'technicalCareerCertified' | 'officeCertified' | 'experienceCertified', label: string) => (
-    <label className="check">
+    <label className={`check ${flagged.has(key) ? 'is-flagged' : ''}`}>
       <input type="checkbox" checked={values[key]} onChange={(e) => set(key, e.target.checked)} />
-      {label}
+      {label}{flag(key)}
     </label>
   );
 
   return (
     <Dialog title={initial ? 'Editar postulante' : 'Nuevo postulante'} eyebrow={initial?.code ?? 'Datos del CV'} onClose={onClose}>
       <form className="form" onSubmit={submit} noValidate>
+        {flagged.size > 0 && (
+          <p className="banner banner--info">
+            Los campos con 🔍 no se encontraron en el CV o no son seguros. Revíselos con el CV abierto; al guardar quedan confirmados.
+          </p>
+        )}
         <fieldset className="form__group">
           <legend>Datos personales</legend>
           <div className="form__grid">
@@ -120,8 +134,8 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
         <fieldset className="form__group">
           <legend>Estudios</legend>
           <div className="form__grid">
-            <label className="field">
-              <span className="field__label">Carrera *</span>
+            <label className={`field ${flagged.has('career') ? 'is-flagged' : ''}`}>
+              <span className="field__label">Carrera *{flag('career')}</span>
               <select value={values.career} onChange={(e) => set('career', e.target.value as Career)}>
                 {CAREERS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -130,16 +144,18 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
             </label>
             {values.career === 'OTRA' ? text('careerName', '¿Cuál carrera?') : <span />}
             {text('university', 'Universidad')}
-            <label className="field">
-              <span className="field__label">Año que cursa</span>
+            <label className={`field ${flagged.has('studyYear') ? 'is-flagged' : ''}`}>
+              <span className="field__label">Año que cursa{flag('studyYear')}</span>
               <select value={values.studyYear} onChange={(e) => set('studyYear', Number(e.target.value))}>
+                {values.studyYear === 0 && <option value={0}>No indicado</option>}
                 {[1, 2, 3, 4, 5, 6].map((y) => (
                   <option key={y} value={y}>{y}° año</option>
                 ))}
               </select>
+              {errors.studyYear && <span className="field__error">{errors.studyYear}</span>}
             </label>
-            <label className="field">
-              <span className="field__label">Tipo de prácticas</span>
+            <label className={`field ${flagged.has('practiceType') ? 'is-flagged' : ''}`}>
+              <span className="field__label">Tipo de prácticas{flag('practiceType')}</span>
               <select value={values.practiceType} onChange={(e) => set('practiceType', e.target.value as PracticeType)}>
                 {PRACTICE_TYPES.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -160,8 +176,8 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
         <fieldset className="form__group">
           <legend>Requisitos</legend>
           <div className="form__grid">
-            <label className="field">
-              <span className="field__label">Brevete</span>
+            <label className={`field ${flagged.has('license') ? 'is-flagged' : ''}`}>
+              <span className="field__label">Brevete{flag('license')}</span>
               <select value={values.license} onChange={(e) => set('license', e.target.value as License)}>
                 {LICENSES.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>

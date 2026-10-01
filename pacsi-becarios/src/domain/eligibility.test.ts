@@ -49,8 +49,16 @@ describe('evaluateCandidate · requisitos excluyentes del aviso', () => {
     expect(withIt.score - without.score).toBe(15);
   });
 
-  it('habilidades blandas sin evaluar → POR EVALUAR (no descarta)', () => {
-    expect(evaluateCandidate(makeCandidate({ softSkills: null })).eligibility).toBe('POR_EVALUAR');
+  it('habilidades blandas sin calificar no bloquean: se califican en la entrevista', () => {
+    const e = evaluateCandidate(makeCandidate({ softSkills: null }));
+    expect(e.eligibility).toBe('APTO');
+    expect(e.checks.find((c) => c.id === 'HABILIDADES_BLANDAS')?.status).toBe('PENDIENTE');
+  });
+
+  it('un dato no encontrado en el CV deja el requisito POR REVISAR, nunca lo descarta', () => {
+    const e = evaluateCandidate(makeCandidate({ license: 'NINGUNA', missing: ['license'] }));
+    expect(e.checks.find((c) => c.id === 'BREVETE')).toMatchObject({ status: 'PENDIENTE' });
+    expect(e.eligibility).toBe('POR_EVALUAR');
   });
 
   it('un incumplimiento excluyente pesa más que una evaluación pendiente', () => {

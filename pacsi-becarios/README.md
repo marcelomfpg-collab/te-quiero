@@ -1,8 +1,13 @@
 # Becarios PACSI 2027-A · Filtro de postulantes
 
-Programa de **Pacsi Ingenieros S.A.C.** para evaluar los CVs de la convocatoria de practicantes
-preprofesionales **Becarios PACSI 2027-A**: revisa solo los requisitos del aviso, muestra quién es
-apto y lleva el proceso hasta los resultados.
+Programa de **Pacsi Ingenieros S.A.C.** para la convocatoria de practicantes **Becarios PACSI 2027-A**:
+
+1. **Baja los CVs del correo** de reclutamiento (conexión IMAP, la misma que usa Outlook) o los recibe
+   arrastrando los PDF/Word.
+2. **Lee cada CV solo, gratis y sin internet**: PDF normales y de dos columnas, CVs escaneados (OCR) y Word.
+3. **Revisa los requisitos del aviso** y marca a cada postulante como **Apto**, **Por revisar** o **No apto**,
+   mostrando la frase del CV de donde salió cada dato.
+4. Lleva el **proceso por etapas** hasta los resultados.
 
 ## Descargar el programa
 
@@ -29,7 +34,7 @@ fabrica y publica una nueva versión en esa misma página.
 npm install
 npm run dev        # versión web en http://localhost:5173
 npm run app        # abre el programa de escritorio
-npm test           # 50 pruebas: reglas de negocio, importación, guardado y filtros
+npm test           # pruebas: reglas, lector de CVs, importación, guardado y filtros
 npm run build      # genera dist/index.html (un único archivo, funciona sin servidor)
 npm run dist:win   # instalador de Windows en release/ (ejecutar en Windows)
 ```
@@ -62,26 +67,35 @@ blandas 30, año de carrera 20, carrera técnica 15. El desglose se ve en el det
 
 ## Flujo de trabajo del reclutador
 
-1. **Registrar CVs**: con **＋ Nuevo postulante** (formulario) o **Importar Excel**: descargar la plantilla CSV, llenar una fila por CV recibido en
-   reclutamiento@pacsiingenieros.com y subirla. El sistema valida cada fila (DNI, brevete,
-   fechas DD/MM/AAAA…), indica en qué fila de Excel está cada error y omite los DNI repetidos.
-2. **Filtrar**: las tarjetas Aptos / Por evaluar / No aptos / Con observaciones son filtros de un
-   clic. Hay búsqueda en tiempo real por nombre, DNI, correo o universidad, y filtros por carrera,
-   etapa, año, turno y **"No cumple"** (p. ej. todos los que fallan por brevete). Cada opción
-   muestra cuántos postulantes daría.
-3. **Evaluar**: en el detalle se ve el checklist de requisitos con el motivo, se califican las
-   habilidades blandas (1–5), se mueve la etapa (Recibido → En evaluación → Entrevista →
-   Seleccionado / Descartado) y se dejan notas. Un "No apto" no puede pasar a Entrevista ni a
-   Seleccionado.
-4. **Exportar** a CSV exactamente lo filtrado, con resultado, puntaje, motivos y notas (listo para Excel).
-
-Los filtros quedan en la URL, así que una vista se puede compartir por enlace
-(p. ej. `?elegibilidad=APTO&carrera=INDUSTRIAL`).
+1. **Recibir CVs**:
+   - **📥 Revisar correo** (programa de escritorio): la primera vez se configura el servidor IMAP, usuario y
+     contraseña (se guarda cifrada con Windows). Baja solo los correos nuevos cuyo asunto contiene "BECARIOS",
+     con todos sus adjuntos (CV + certificados), y puede revisar el buzón automáticamente cada 15 minutos.
+     Nunca duplica: recuerda los correos ya procesados y detecta DNIs repetidos.
+   - **Subir CVs (PDF)**: arrastrar los archivos descargados (PDF, Word .docx o fotos).
+   - También: **＋ Nuevo** (formulario) o **Más → Importar desde Excel**.
+2. **Lectura automática del CV** (`src/cv/`), sin IA ni servicios de pago:
+   - Nombre y carrera desde el **asunto del correo** (`BECARIOS 2027 - APELLIDO NOMBRE - CARRERA`).
+   - DNI, celular, correo, universidad (catálogo de universidades del sur del Perú), ciudad (Arequipa y sus
+     distritos; ignora calles como "Av. Arequipa" de Lima), ciclo o año ("VIII ciclo" = 4° año), egresado o
+     estudiante, brevete y categoría, Excel/ofimática certificada, carrera técnica (SENATI, Tecsup…),
+     **meses de experiencia** sumando las fechas de la sección de experiencia ("Ene 2024 – Jun 2024",
+     "03/2025 - Presente"; superposiciones contadas una vez) y certificados de trabajo adjuntos.
+   - PDF de dos columnas: se detectan las columnas para no mezclar secciones. CVs escaneados: OCR en español
+     incluido en el programa (Tesseract), sin internet.
+   - **Lo que no encuentra no descarta a nadie**: queda **🔍 por revisar** con la frase del CV como evidencia,
+     y se confirma con un clic (✓ Sí cumple / ✕ No cumple) o con **Corregir datos**.
+3. **Filtrar**: tarjetas Aptos / Por revisar / No aptos / Con observaciones, búsqueda y filtros por carrera,
+   etapa, año, turno y "No cumple".
+4. **Evaluar**: ver el CV original dentro del programa, calificar habilidades blandas (1–5, en la
+   entrevista), mover la etapa y dejar notas. Un "No apto" no puede pasar a Entrevista.
+5. **Exportar** a Excel lo filtrado.
 
 ## Arquitectura
 
 ```
 src/
+├── cv/                      Lector de CVs: texto de PDF/Word/OCR, reglas de extracción, importación de correo
 ├── domain/                  Reglas de negocio puras (sin React), 100 % probadas
 │   ├── convocatoria.ts      Parámetros y cronograma de la convocatoria
 │   ├── eligibility.ts       Evaluación de requisitos, resultado y puntaje
@@ -105,12 +119,12 @@ src/
 y los conteos de todas las facetas salen de una sola pasada, la búsqueda usa debounce y
 `useDeferredValue`, y solo se dibujan 25–100 filas por página.
 
-**Escritorio:** `electron/main.cjs` abre el mismo `dist/index.html` en una ventana propia, sin
-navegador ni internet. **Servidor central (futuro):** definir `VITE_API_URL` (ver `.env.example`); la
+**Escritorio:** `electron/main.cjs` abre el mismo `dist/index.html` en una ventana propia; `electron/mail.cjs`
+se conecta al buzón por IMAP (imapflow + mailparser) y `scripts/copy-ocr.cjs` incluye el OCR en el instalador. **Servidor central (futuro):** definir `VITE_API_URL` (ver `.env.example`); la
 UI no cambia, porque solo depende de la interfaz `CandidateRepository`.
 
 ## Próximos pasos sugeridos
 
 - Backend con base de datos y usuarios (quién calificó o movió a cada postulante).
-- Leer automáticamente los correos del buzón de reclutamiento y adjuntar el CV en PDF.
+- Copia de seguridad que incluya también los archivos PDF (hoy guarda los datos).
 - Agenda de entrevistas (23/11 al 11/12) y envío de resultados por correo el 15/12.

@@ -7,10 +7,17 @@ import type { Candidate } from '../../domain/types';
 import type { CandidateRepository } from '../../services';
 import { fromBackup, toBackup } from '../../services/backup';
 import { generateMockCandidates } from '../../services/mockData';
+import { clearProcessedIds, importCvFiles, syncMailbox, type MailSyncSummary } from '../../cv/importCvs';
+import { fileStore } from '../../lib/fileStore';
+import type { CandidateFile } from '../../domain/types';
 import { ActiveFilters } from './components/ActiveFilters';
 import { CandidateDrawer } from './components/CandidateDrawer';
 import { CandidateForm } from './components/CandidateForm';
 import { CandidatesTable } from './components/CandidatesTable';
+import { CvImportDialog, ImportResultView } from './components/CvImportDialog';
+import { Dialog } from './components/Dialog';
+import { FileViewer } from './components/FileViewer';
+import { MailDialog } from './components/MailDialog';
 import { ConvocatoriaTimeline } from './components/ConvocatoriaTimeline';
 import { EligibilitySummary } from './components/EligibilitySummary';
 import { ImportDialog } from './components/ImportDialog';
@@ -60,6 +67,18 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const [importing, setImporting] = useState(false);
   /** null = cerrado, 'new' = alta, o el postulante que se edita. */
   const [form, setForm] = useState<'new' | Candidate | null>(null);
+  const [cvImporting, setCvImporting] = useState(false);
+  const [viewing, setViewing] = useState<CandidateFile | null>(null);
+  const [mailSettings, setMailSettings] = useState(false);
+  const [sync, setSync] = useState<{ progress: string | null; summary: MailSyncSummary | null; error?: string } | null>(null);
+  /** El correo solo se puede conectar desde el programa de escritorio. */
+  const desktop = typeof window !== 'undefined' && !!window.pacsiDesktop;
+  const [mailConfig, setMailConfig] = useState<{ autoCheckMinutes: number } | null>(null);
+
+  const refreshMailConfig = useCallback(() => {
+    void window.pacsiDesktop?.mail.getConfig().then((c) => setMailConfig(c && c.hasPassword ? { autoCheckMinutes: c.autoCheckMinutes } : null));
+  }, []);
+  useEffect(refreshMailConfig, [refreshMailConfig]);
 
   useEffect(() => {
     if (!toast) return;
@@ -96,6 +115,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const deleteSelected = () => {
     if (!selected) return;
     if (!window.confirm(`¿Eliminar a ${selected.fullName}? Esta acción no se puede deshacer.`)) return;
+    for (const f of selected.candidate.files ?? []) void fileStore.remove(f.id).catch(() => undefined);
     void load.remove(selected.candidate.id);
     setSelectedId(null);
   };
@@ -116,7 +136,9 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   };
 
   const clearAll = () => {
-    if (!window.confirm('¿Borrar TODOS los postulantes de esta computadora? Haga antes una copia de seguridad.')) return;
+    if (!window.confirm('¿Borrar TODOS los postulantes y CVs de esta computadora? Haga antes una copia de seguridad.')) return;
+    void fileStore.clear().catch(() => undefined);
+    clearProcessedIds();
     void replaceData([], 'Se borraron todos los postulantes.');
   };
 
@@ -130,6 +152,40 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
       })
       .catch((error: unknown) => notifyError(messageOf(error, 'No se pudo leer la copia de seguridad.')));
   };
+
+  const importCvs = async (files: File[], onProgress: (m: string) => void) => {
+    const summary = await importCvFiles(files, load.data ?? [], today, onProgress);
+    if (summary.created.length) await load.importMany(summary.created);
+    return summary;
+  };
+
+  const checkMail = useCallback(
+    async (silent = false) => {
+      if (!window.pacsiDesktop || sync?.progress) return;
+      if (!silent) setSync({ progress: 'Conectando con el correo…', summary: null });
+      try {
+        const summary = await syncMailbox(load.data ?? [], today, (m) => !silent && setSync({ progress: m, summary: null }));
+        if (summary.created.length) await load.importMany(summary.created);
+        if (silent) {
+          if (summary.created.length) setToast({ text: `📥 ${summary.created.length} CV(s) nuevos del correo, ya evaluados.`, tone: 'ok' });
+        } else setSync({ progress: null, summary });
+      } catch (error) {
+        const message = messageOf(error, 'No se pudo revisar el correo.');
+        if (silent) notifyError(message);
+        else setSync({ progress: null, summary: null, error: message });
+      }
+    },
+    [load, today, sync?.progress, notifyError],
+  );
+
+  // Revisión automática del correo mientras el programa está abierto.
+  useEffect(() => {
+    if (!mailConfig?.autoCheckMinutes || !hasData) return;
+    const timer = setInterval(() => void checkMail(true), mailConfig.autoCheckMinutes * 60_000);
+    return () => clearInterval(timer);
+  }, [mailConfig, hasData, checkMail]);
+
+  const openMail = () => (mailConfig ? void checkMail() : setMailSettings(true));
 
   const handleImport = async (candidates: Parameters<typeof load.importMany>[0]) => {
     const n = await load.importMany(candidates);
@@ -150,17 +206,32 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           </div>
         </div>
         <div className="page__actions">
-          <button type="button" className="btn btn--primary" onClick={() => setForm('new')} disabled={!hasData}>
-            ＋ Nuevo postulante
+          {desktop && (
+            <button type="button" className="btn btn--primary" onClick={openMail} disabled={!hasData || !!sync?.progress}>
+              📥 {mailConfig ? 'Revisar correo' : 'Conectar correo'}
+            </button>
+          )}
+          <button type="button" className={`btn ${desktop ? 'btn--secondary' : 'btn--primary'}`} onClick={() => setCvImporting(true)} disabled={!hasData}>
+            Subir CVs (PDF)
           </button>
-          <button type="button" className="btn btn--secondary" onClick={() => setImporting(true)} disabled={!hasData}>
-            Importar Excel
+          <button type="button" className="btn btn--secondary" onClick={() => setForm('new')} disabled={!hasData}>
+            ＋ Nuevo
           </button>
           <button type="button" className="btn btn--secondary" disabled={!sorted.length} onClick={() => downloadCsv(`becarios-2027-${today}.csv`, toCsv(sorted, CSV_COLUMNS))}>
             Exportar ({sorted.length.toLocaleString('es-PE')})
           </button>
           <Popover label="Más" align="end" closeOnSelect>
             <div className="menu">
+              {desktop && (
+                <button type="button" className="menu__item" onClick={() => setMailSettings(true)}>
+                  Configurar correo
+                  <span className="muted">Servidor, contraseña y revisión automática</span>
+                </button>
+              )}
+              <button type="button" className="menu__item" disabled={!hasData} onClick={() => setImporting(true)}>
+                Importar desde Excel
+                <span className="muted">Con la plantilla CSV</span>
+              </button>
               <button type="button" className="menu__item" disabled={!load.data?.length} onClick={() => load.data && downloadFile(`copia-becarios-2027-${today}.json`, toBackup(load.data), 'application/json')}>
                 Copia de seguridad
                 <span className="muted">Descarga todos los datos en un archivo</span>
@@ -226,7 +297,12 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
         )}
 
         {isEmpty ? (
-          <WelcomeState onAdd={() => setForm('new')} onImport={() => setImporting(true)} onSample={loadSample} />
+          <WelcomeState
+            onMail={desktop ? openMail : undefined}
+            onUpload={() => setCvImporting(true)}
+            onAdd={() => setForm('new')}
+            onSample={loadSample}
+          />
         ) : !hasData && load.status === 'error' ? (
           <ErrorState message={load.message} onRetry={load.reload} />
         ) : !hasData ? (
@@ -262,11 +338,60 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
       </section>
 
       {selected && !form && (
-        <CandidateDrawer row={selected} onClose={closeDrawer} onUpdate={load.update} onEdit={() => setForm(selected.candidate)} onDelete={deleteSelected} />
+        <CandidateDrawer row={selected} onClose={closeDrawer} onUpdate={load.update} onEdit={() => setForm(selected.candidate)} onDelete={deleteSelected} onViewFile={setViewing} />
       )}
       {form && load.data && (
         <CandidateForm initial={form === 'new' ? undefined : form} existing={load.data} today={today} onSave={saveCandidate} onClose={closeForm} />
       )}
+      {cvImporting && <CvImportDialog onImport={importCvs} onClose={() => setCvImporting(false)} />}
+      {mailSettings && (
+        <MailDialog
+          onClose={() => setMailSettings(false)}
+          onSaved={() => {
+            setMailSettings(false);
+            refreshMailConfig();
+            void checkMail();
+          }}
+        />
+      )}
+      {sync && (
+        <Dialog title="Revisar correo" eyebrow="Buzón de reclutamiento" onClose={sync.progress ? () => undefined : () => setSync(null)}>
+          {sync.progress && (
+            <div className="progress" role="status" aria-live="polite">
+              <span className="spinner" aria-hidden="true" />
+              <span>{sync.progress}</span>
+            </div>
+          )}
+          {sync.error && (
+            <>
+              <p className="form-error" role="alert">{sync.error}</p>
+              <button type="button" className="btn btn--link" onClick={() => { setSync(null); setMailSettings(true); }}>Revisar la configuración del correo</button>
+            </>
+          )}
+          {sync.summary && (
+            <ImportResultView
+              summary={sync.summary}
+              extra={
+                <>
+                  <p className="muted">{sync.summary.checked} correo(s) nuevo(s) revisado(s).</p>
+                  {sync.summary.withoutCv.length > 0 && (
+                    <details className="skipped">
+                      <summary>{sync.summary.withoutCv.length} correo(s) sin CV adjunto</summary>
+                      <ul>{sync.summary.withoutCv.map((w, i) => <li key={i}>{w}</li>)}</ul>
+                    </details>
+                  )}
+                </>
+              }
+            />
+          )}
+          {!sync.progress && (
+            <div className="dialog__actions">
+              <button type="button" className="btn btn--primary" onClick={() => setSync(null)}>Listo</button>
+            </div>
+          )}
+        </Dialog>
+      )}
+      {viewing && <FileViewer file={viewing} onClose={() => setViewing(null)} />}
       {importing && load.data && <ImportDialog existing={load.data} today={today} onImport={handleImport} onClose={closeImport} />}
       {toast && (
         <div className={`toast toast--${toast.tone}`} role={toast.tone === 'error' ? 'alert' : 'status'}>

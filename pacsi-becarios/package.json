@@ -10,17 +10,22 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "app": "npm run build && electron .",
-    "dist:win": "npm run build && electron-builder --win --publish never"
+    "app": "npm run ocr && npm run build && electron .",
+    "dist:win": "npm run ocr && npm run build && electron-builder --win --publish never",
+    "ocr": "node scripts/copy-ocr.cjs"
   },
   "devDependencies": {
+    "@tesseract.js-data/spa": "^1.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
+    "mammoth": "^1.13.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "tesseract.js": "^7.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "vite-plugin-singlefile": "^2.3.3",
@@ -59,11 +64,21 @@
     "portable": {
       "artifactName": "Becarios-PACSI-Portable-${version}.${ext}"
     },
-    "publish": null
+    "publish": null,
+    "extraResources": [
+      {
+        "from": "build/ocr",
+        "to": "ocr"
+      }
+    ]
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/marcelomfpg-collab/te-quiero.git",
     "directory": "pacsi-becarios"
+  },
+  "dependencies": {
+    "imapflow": "^2.1.2",
+    "mailparser": "^3.9.32"
   }
 }

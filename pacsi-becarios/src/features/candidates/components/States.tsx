@@ -47,38 +47,47 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 }
 
 interface WelcomeStateProps {
+  /** Solo en el programa de escritorio. */
+  onMail?: () => void;
+  onUpload: () => void;
   onAdd: () => void;
-  onImport: () => void;
   onSample: () => void;
 }
 
-/** Primera vez que se abre el programa: tres caminos claros para empezar. */
-export function WelcomeState({ onAdd, onImport, onSample }: WelcomeStateProps) {
+/** Primera vez que se abre el programa: caminos claros para empezar. */
+export function WelcomeState({ onMail, onUpload, onAdd, onSample }: WelcomeStateProps) {
   return (
     <div className="welcome">
       <h2 className="welcome__title">Bienvenido al filtro de postulantes</h2>
       <p className="welcome__text">
-        Registre los CVs que llegan al correo de reclutamiento. El programa revisa solo los requisitos de la convocatoria y le
-        muestra quién es apto.
+        El programa lee los CVs que llegan al correo de reclutamiento, revisa solo los requisitos de la convocatoria y le muestra
+        quién es apto. Lo que no logre leer queda marcado para que usted lo revise.
       </p>
       <div className="welcome__options">
+        {onMail && (
+          <button type="button" className="welcome__option welcome__option--main" onClick={onMail}>
+            <span className="welcome__icon" aria-hidden="true">📥</span>
+            <strong>Conectar el correo</strong>
+            <span className="muted">Baja solo los CVs del buzón de reclutamiento.</span>
+          </button>
+        )}
+        <button type="button" className={`welcome__option ${onMail ? '' : 'welcome__option--main'}`} onClick={onUpload}>
+          <span className="welcome__icon" aria-hidden="true">⤒</span>
+          <strong>Subir CVs en PDF</strong>
+          <span className="muted">Elija los CVs descargados (muchos a la vez).</span>
+        </button>
         <button type="button" className="welcome__option" onClick={onAdd}>
           <span className="welcome__icon" aria-hidden="true">＋</span>
-          <strong>Agregar un postulante</strong>
-          <span className="muted">Llene un formulario con los datos del CV.</span>
-        </button>
-        <button type="button" className="welcome__option" onClick={onImport}>
-          <span className="welcome__icon" aria-hidden="true">⤒</span>
-          <strong>Importar desde Excel</strong>
-          <span className="muted">Suba muchos postulantes a la vez con la plantilla.</span>
+          <strong>Agregar a mano</strong>
+          <span className="muted">Llene un formulario con los datos.</span>
         </button>
         <button type="button" className="welcome__option" onClick={onSample}>
           <span className="welcome__icon" aria-hidden="true">▶</span>
           <strong>Ver un ejemplo</strong>
-          <span className="muted">Cargue 180 postulantes ficticios para probar el programa.</span>
+          <span className="muted">180 postulantes ficticios para probar.</span>
         </button>
       </div>
-      <p className="muted">Los datos se guardan en esta computadora. Use "Más → Copia de seguridad" para respaldarlos.</p>
+      <p className="muted">Los datos y CVs se guardan en esta computadora. Use "Más → Copia de seguridad" para respaldarlos.</p>
     </div>
   );
 }

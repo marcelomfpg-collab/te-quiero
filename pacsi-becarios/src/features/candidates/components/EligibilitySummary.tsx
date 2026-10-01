@@ -11,8 +11,8 @@ interface EligibilitySummaryProps {
 }
 
 const CARDS: { value: Eligibility; label: string; hint: string }[] = [
-  { value: 'APTO', label: 'Aptos', hint: 'Cumplen todos los requisitos excluyentes' },
-  { value: 'POR_EVALUAR', label: 'Por evaluar', hint: 'Falta calificar habilidades blandas' },
+  { value: 'APTO', label: 'Aptos', hint: 'Cumplen los requisitos del CV' },
+  { value: 'POR_EVALUAR', label: 'Por revisar', hint: 'Falta confirmar algún dato del CV' },
   { value: 'NO_APTO', label: 'No aptos', hint: 'Incumplen algún requisito excluyente' },
 ];
 

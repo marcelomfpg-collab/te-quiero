@@ -65,16 +65,19 @@ jobs:
           body: |
             ## Programa de filtro de postulantes · Becarios PACSI 2027-A
 
+            **Qué hace:** baja los CVs del correo de reclutamiento (o los sube usted en PDF/Word),
+            los **lee solo** —también los escaneados— y marca quién es **Apto**, **Por revisar** o **No apto**.
+            Todo gratis y en su computadora: no usa servicios de pago.
+
             **¿Cuál descargo?**
 
             | Archivo | Para quién |
             |---|---|
             | **Becarios-PACSI-Instalador-…exe** | Windows. Se instala con acceso directo en el escritorio. *(Recomendado)* |
-            | **Becarios-PACSI-Portable-…exe** | Windows sin instalar: doble clic y listo (sirve desde un USB). |
-            | **Becarios-PACSI-Navegador-…html** | Cualquier computadora (Windows, Mac, Linux): se abre con doble clic en Chrome o Edge. |
+            | **Becarios-PACSI-Portable-…exe** | Windows sin instalar: doble clic y listo. |
+            | **Becarios-PACSI-Navegador-…html** | Otras computadoras: se abre en Chrome o Edge (sin conexión al correo). |
 
-            **Al abrirlo por primera vez en Windows** puede aparecer "Windows protegió su PC".
-            Haga clic en **Más información → Ejecutar de todas formas** (el programa no tiene firma digital comercial).
+            **Al abrirlo por primera vez en Windows** puede aparecer "Windows protegió su PC":
+            haga clic en **Más información → Ejecutar de todas formas**.
 
-            Los datos se guardan en la computadora donde se usa. Para pasarlos a otra PC:
-            menú **Más → Copia de seguridad**, y en la otra PC **Más → Restaurar copia de seguridad**.
+            **Para actualizar:** instale la versión nueva encima; sus postulantes no se borran.

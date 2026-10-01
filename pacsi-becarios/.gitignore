@@ -4,3 +4,4 @@ release
 *.local
 .env
 *.tsbuildinfo
+build/ocr
