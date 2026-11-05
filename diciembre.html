@@ -112,6 +112,23 @@
   }
   #torch.on{ opacity:1; }
 
+  /* al terminar de limpiar: el polvo se disuelve y un destello tibio llena la pantalla */
+  #dirt.fade{ opacity:0; transition:opacity 1.4s ease; pointer-events:none; }
+  .motes{ transition:opacity 1s ease; }
+  .motes.fade{ opacity:0; }
+  #flash{
+    position:fixed; inset:0; z-index:8;
+    pointer-events:none;
+    opacity:0;
+    background:radial-gradient(circle at 50% 42%, rgba(255,236,190,.96) 0%, rgba(255,190,110,.55) 38%, rgba(255,154,90,0) 72%);
+  }
+  #flash.go{ animation:flash 2.2s ease-in-out forwards; }
+  @keyframes flash{
+    0%{ opacity:0; transform:scale(.6); }
+    45%{ opacity:1; transform:scale(1.15); }
+    100%{ opacity:.95; transform:scale(1.6); }
+  }
+
   /* motas de polvo flotando */
   .motes{ position:fixed; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
   .mote{
@@ -164,6 +181,7 @@
 <canvas id="dirt" aria-hidden="true"></canvas>
 <div class="motes" id="motes" aria-hidden="true"></div>
 <div id="torch" aria-hidden="true"></div>
+<div id="flash" aria-hidden="true"></div>
 <p id="hint">mantén presionado y desliza para limpiar</p>
 
 <script>
@@ -178,6 +196,36 @@
   let W, H, DPR, R;
   const strokes = [];          /* puntos limpiados, normalizados (0-1), para repintar si cambia el tamaño */
   const MAX_STROKE_VALUES = 80000;
+
+  /* ---- progreso: una cuadricula de celdas; cada pasada marca las celdas que toca ---- */
+  const DONE_AT = 0.85;        /* con 85% limpio se da por terminado (las esquinas exactas no hacen falta) */
+  const CLEAN_FLAG = "gracias-dic-limpio";
+  let cell, cols, rows, covered, coveredCount, totalCells;
+  let finished = false;
+
+  function initCoverage(){
+    cell = Math.max(18, R * 0.45);
+    cols = Math.ceil(W / cell);
+    rows = Math.ceil(H / cell);
+    totalCells = cols * rows;
+    covered = new Uint8Array(totalCells);
+    coveredCount = 0;
+  }
+
+  function markCoverage(x, y){
+    const rad = R * 0.75;
+    const c0 = Math.max(0, Math.floor((x - rad) / cell)), c1 = Math.min(cols - 1, Math.floor((x + rad) / cell));
+    const r0 = Math.max(0, Math.floor((y - rad) / cell)), r1 = Math.min(rows - 1, Math.floor((y + rad) / cell));
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const dx = (c + 0.5) * cell - x, dy = (r + 0.5) * cell - y;
+        if (dx * dx + dy * dy <= rad * rad) {
+          const i = r * cols + c;
+          if (!covered[i]) { covered[i] = 1; coveredCount++; }
+        }
+      }
+    }
+  }
 
   /* generador pseudoaleatorio con semilla: la suciedad se ve igual cada vez */
   function mulberry32(a){
@@ -331,11 +379,29 @@
     lg.addColorStop(1, "rgba(255,196,120,0)");
     lctx.fillStyle = lg;
     lctx.beginPath(); lctx.arc(x, y, R * 1.25, 0, Math.PI * 2); lctx.fill();
+
+    markCoverage(x, y);
   }
 
   function stamp(x, y){
     clean(x, y);
     if (strokes.length < MAX_STROKE_VALUES) strokes.push(x / W, y / H);
+    if (!finished && coveredCount / totalCells >= DONE_AT) finish();
+  }
+
+  /* termino de limpiar: queda guardado, se disuelve lo que falta y se vuelve al album */
+  function finish(){
+    finished = true;
+    activePointer = null;
+    last = null;
+    torch.classList.remove("on");
+    dirt.classList.remove("drawing");
+    try { localStorage.setItem(CLEAN_FLAG, "1"); } catch (e) {}
+    hideHint();
+    dirt.classList.add("fade");
+    document.getElementById("motes").classList.add("fade");
+    document.getElementById("flash").classList.add("go");
+    setTimeout(() => { location.replace("index.html"); }, 2400);
   }
 
   function replay(){
@@ -363,7 +429,7 @@
   function hideHint(){ hint.classList.add("gone"); }
 
   dirt.addEventListener("pointerdown", (e) => {
-    if (activePointer !== null) return;
+    if (finished || activePointer !== null) return;
     activePointer = e.pointerId;
     last = null;
     try { dirt.setPointerCapture(e.pointerId); } catch (err) {}
@@ -421,6 +487,7 @@
 
   function rebuild(){
     sizeCanvases();
+    initCoverage();
     paintDirt();
     replay();
   }

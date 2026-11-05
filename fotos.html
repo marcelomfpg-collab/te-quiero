@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b0f28">
+<title>Nuestros momentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=Caveat:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sun:#ff9a5a;
+    --coral:#ff6f8e;
+    --gold:#f6c667;
+    --paper:#fff3e4;
+    --ink:#3a2440;
+    --ink-soft:#6c5470;
+    --line:rgba(255,214,170,.28);
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--paper);
+    font-family:"Work Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(120% 50% at 50% 0%, rgba(255,154,90,.36), transparent 60%),
+      linear-gradient(180deg, #2c1a3b 0%, #1b0f28 55%, #120a1c 100%);
+    background-attachment:fixed;
+  }
+  h1,h2{ font-family:"Fraunces", Georgia, serif; margin:0; }
+  .wrap{ max-width:980px; margin:0 auto; padding-inline:20px; }
+  .script{ font-family:"Caveat", cursive; }
+
+  /* ---------- encabezado ---------- */
+  .hero{ text-align:center; padding:60px 0 22px; }
+  .sun{
+    width:min(30vw,110px); aspect-ratio:1;
+    margin:0 auto 20px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe3ad, var(--sun) 45%, var(--coral) 100%);
+    box-shadow:0 0 50px 8px rgba(255,154,90,.45);
+  }
+  .eyebrow{ font-size:1.6rem; color:var(--gold); margin:0 0 4px; }
+  .hero h1{
+    font-size:clamp(2rem, 7vw, 3.2rem);
+    font-weight:600;
+    line-height:1.1;
+    color:#fff6ea;
+    text-wrap:balance;
+  }
+  .hero .sub{ margin:12px 0 0; color:#f3d9c4; font-size:1.02rem; }
+
+  /* ---------- coleccion de fotos (polaroids) ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:36px 16px;
+    padding:30px 0 56px;
+  }
+  .grid > :nth-child(even){ margin-top:26px; }
+  @media (min-width:720px){
+    .grid{ grid-template-columns:repeat(3, minmax(0,1fr)); gap:48px 32px; }
+    .grid > :nth-child(even){ margin-top:0; }
+    .grid > :nth-child(3n+2){ margin-top:30px; }
+  }
+
+  .frame{
+    position:relative;
+    margin:0;
+    background:var(--paper);
+    padding:11px 11px 0;
+    border-radius:4px;
+    box-shadow:0 20px 34px -16px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.05);
+    transform:rotate(var(--r));
+    transition:transform .35s ease, box-shadow .35s ease;
+    animation:rise .8s cubic-bezier(.2,.7,.2,1) backwards;
+    animation-delay:calc(var(--i) * 80ms + 150ms);
+  }
+  .frame:hover{
+    transform:translateY(-8px) rotate(0deg);
+    box-shadow:0 28px 40px -16px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.05);
+  }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(28px) rotate(var(--r)); }
+  }
+  /* cinta adhesiva */
+  .frame::before{
+    content:"";
+    position:absolute; top:-13px; left:50%;
+    width:78px; height:26px;
+    background:rgba(246,198,103,.55);
+    transform:translateX(-50%) rotate(var(--tr));
+    box-shadow:0 2px 6px -2px rgba(0,0,0,.35);
+    backdrop-filter:blur(1px);
+  }
+  .photo{
+    aspect-ratio:4/5;
+    background:#e9cdb7;
+    border-radius:2px;
+    overflow:hidden;
+    position:relative;
+  }
+  .photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* hueco vacio, listo para recibir la foto */
+  .frame.empty .photo{
+    background:
+      repeating-linear-gradient(45deg, rgba(58,36,64,.045) 0 10px, transparent 10px 20px),
+      linear-gradient(160deg, #f6e3cf, #ecc9b0);
+  }
+  .ph{
+    position:absolute; inset:9px;
+    border:1.5px dashed rgba(58,36,64,.3);
+    border-radius:3px;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:6px;
+    text-align:center;
+    color:var(--ink-soft);
+  }
+  .ph-icon{ font-size:2rem; opacity:.55; }
+  .ph-text{ font-family:"Caveat", cursive; font-size:1.3rem; }
+
+  figcaption{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 4px 14px;
+    min-height:3.4em;
+    font-family:"Caveat", cursive;
+    font-size:1.25rem;
+    line-height:1.15;
+    color:var(--ink);
+  }
+  .num{
+    flex:none;
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1px solid rgba(58,36,64,.3);
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Fraunces", serif;
+    font-size:.78rem;
+    color:#b07a2a;
+  }
+  .soft{ color:var(--ink-soft); opacity:.75; }
+
+  /* ---------- mi reaccion en video ---------- */
+  .reaction{ text-align:center; padding:6px 0 70px; }
+  .reaction h2{ font-size:clamp(1.6rem, 5.5vw, 2.2rem); color:#fff6ea; }
+  .reaction .eyebrow{ margin-bottom:2px; }
+  .cinema{
+    --ratio:1.7778;
+    margin:26px auto 0;
+    width:min(100%, 720px);
+    padding:12px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.02));
+    box-shadow:0 26px 50px -22px rgba(0,0,0,.8);
+    animation:rise .9s cubic-bezier(.2,.7,.2,1) .2s backwards;
+  }
+  .screen{
+    aspect-ratio:var(--ratio);
+    width:min(100%, calc(78vh * var(--ratio)));
+    margin:0 auto;
+    border-radius:13px;
+    overflow:hidden;
+    background:#07050b;
+    position:relative;
+  }
+  .screen video{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
+  .cinema.empty .screen{
+    background:
+      radial-gradient(70% 70% at 50% 40%, rgba(255,154,90,.22), transparent 70%),
+      linear-gradient(160deg, #241532, #130b1d);
+    border:1.5px dashed rgba(255,214,170,.32);
+  }
+  .cinema.empty .screen-in{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:14px;
+    color:#f3d9c4;
+  }
+  .playdot{
+    width:78px; height:78px;
+    border-radius:50%;
+    border:2px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold);
+    font-size:1.9rem;
+    padding-left:6px;
+    box-shadow:0 0 34px rgba(246,198,103,.28);
+  }
+  .screen-in .ph-text{ font-size:1.45rem; }
+  .cinema-cap{
+    margin:14px 6px 4px;
+    font-family:"Caveat", cursive;
+    font-size:1.4rem;
+    color:#f3d9c4;
+  }
+
+  /* ---------- pie ---------- */
+  footer{ text-align:center; padding:6px 0 54px; color:var(--ink-soft); font-size:.85rem; }
+  footer .script{ display:block; font-size:1.25rem; color:var(--gold); margin-bottom:6px; }
+  footer a{ color:#c9a98f; text-decoration:none; border-bottom:1px solid rgba(201,169,143,.4); }
+  footer a:hover{ color:var(--gold); border-color:var(--gold); }
+  footer .heart{ color:var(--coral); }
+
+  @media (prefers-reduced-motion: reduce){
+    .frame, .cinema{ animation:none; }
+    .frame{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <div class="sun"></div>
+  <p class="eyebrow script">para ti, Cami</p>
+  <h1>Nuestros momentos</h1>
+  <p class="sub">diez recuerdos que quería que vieras</p>
+</header>
+
+<main class="wrap">
+  <section class="grid" id="grid" aria-label="Fotos"></section>
+  <section class="reaction" id="reaction" aria-label="Mi reacción en video"></section>
+</main>
+
+<footer class="wrap">
+  <span class="script">gracias por estar</span>
+  hecho con <span class="heart">♡</span> para ti
+  <p><a href="index.html">← volver a las canciones</a></p>
+</footer>
+
+<script>
+/* =====================================================================
+   ✏️  CÓMO LLENAR ESTA PÁGINA
+   -----------------------------------------------------------------
+   PHOTOS  → las 10 fotos. Cada una tiene:
+               src     → ruta de la foto (ej. "media/fotos/01.jpg").
+                         Déjalo vacío "" y se ve el hueco con su marco.
+               caption → texto chiquito debajo (opcional)
+   REACTION → tu video:
+               video   → ruta del video (ej. "media/fotos/reaccion.mp4")
+               poster  → imagen de portada (opcional)
+               title / caption → los textos de la sección
+             El video se ajusta solo a horizontal o vertical.
+   Mándame las fotos y el video y yo los pongo aquí.
+   ===================================================================== */
+
+const PHOTOS = [
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" },
+  { src: "", caption: "" }
+];
+
+const REACTION = {
+  title: "Mi reacción",
+  eyebrow: "y ahora, mírame a mí",
+  video: "",
+  poster: "",
+  caption: ""
+};
+
+/* ------------------------- render (no tocar) ------------------------- */
+const ROT  = [-2.4, 1.8, -1.2, 2.6, -2, 1.2, -2.8, 2.1, -1.5, 2.4];
+const TAPE = [-4, 3, -2, 5, -5, 2, -3, 4, -6, 3];
+
+const grid = document.getElementById("grid");
+PHOTOS.forEach((p, i) => {
+  const n = String(i + 1).padStart(2, "0");
+  const fig = document.createElement("figure");
+  fig.className = "frame" + (p.src ? "" : " empty");
+  fig.style.setProperty("--r", ROT[i % ROT.length] + "deg");
+  fig.style.setProperty("--tr", TAPE[i % TAPE.length] + "deg");
+  fig.style.setProperty("--i", i);
+  fig.innerHTML = `
+    <div class="photo">
+      ${p.src
+        ? `<img src="${p.src}" alt="${p.caption || "recuerdo " + n}" loading="lazy">`
+        : `<div class="ph"><span class="ph-icon">📷</span><span class="ph-text">tu foto aquí</span></div>`}
+    </div>
+    <figcaption>
+      <span class="num">${n}</span>
+      ${p.caption ? `<span>${p.caption}</span>` : `<span class="soft">aquí va el recuerdo</span>`}
+    </figcaption>
+  `;
+  grid.appendChild(fig);
+});
+
+const reaction = document.getElementById("reaction");
+reaction.innerHTML = `
+  <p class="eyebrow script">${REACTION.eyebrow}</p>
+  <h2>${REACTION.title}</h2>
+  <div class="cinema${REACTION.video ? "" : " empty"}" id="cinema">
+    <div class="screen">
+      ${REACTION.video
+        ? `<video controls playsinline preload="metadata" poster="${REACTION.poster || ""}">
+             <source src="${REACTION.video}" type="video/mp4">
+           </video>`
+        : `<div class="screen-in">
+             <div class="playdot">▶</div>
+             <span class="ph-text">aquí va mi video</span>
+           </div>`}
+    </div>
+    ${REACTION.caption ? `<p class="cinema-cap">${REACTION.caption}</p>` : ""}
+  </div>
+`;
+
+/* el marco del video se adapta a horizontal o vertical segun el archivo real */
+const rv = reaction.querySelector("video");
+if (rv) {
+  rv.addEventListener("loadedmetadata", () => {
+    if (rv.videoWidth && rv.videoHeight) {
+      document.getElementById("cinema").style.setProperty("--ratio", rv.videoWidth / rv.videoHeight);
+    }
+  });
+}
+</script>
+</body>
+</html>

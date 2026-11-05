@@ -553,6 +553,37 @@
   .extra-card.has-video .extra-media video{ width:100%; height:100%; object-fit:cover; }
   .extra-card.has-video p{ font-family:"Caveat", cursive; font-size:1.15rem; color:#f3d9c4; }
 
+  /* ---------- BOTON DE DICIEMBRE (solo despues de limpiar diciembre.html) ---------- */
+  #dic-cta{
+    position:fixed;
+    left:50%;
+    bottom:max(22px, calc(env(safe-area-inset-bottom) + 14px));
+    z-index:40;
+    display:inline-block;
+    padding:13px 28px;
+    border-radius:999px;
+    background:linear-gradient(135deg, #ffd58a, #ff9a5a 55%, #ff6f8e);
+    color:#3a2440;
+    font-family:"Caveat", cursive;
+    font-size:1.6rem;
+    font-weight:700;
+    line-height:1.1;
+    white-space:nowrap;
+    text-decoration:none;
+    box-shadow:0 10px 30px -6px rgba(255,140,90,.7), inset 0 0 0 1px rgba(255,255,255,.28);
+    opacity:0;
+    transform:translateX(-50%) translateY(34px);
+    animation:ctaIn .9s cubic-bezier(.2,.8,.2,1) 1.2s forwards, ctaGlow 2.6s ease-in-out 2.2s infinite;
+  }
+  @keyframes ctaIn{ to{ opacity:1; transform:translateX(-50%) translateY(0); } }
+  @keyframes ctaGlow{
+    0%,100%{ box-shadow:0 10px 30px -6px rgba(255,140,90,.7), inset 0 0 0 1px rgba(255,255,255,.28); }
+    50%{ box-shadow:0 10px 44px 2px rgba(255,170,100,.95), inset 0 0 0 1px rgba(255,255,255,.4); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    #dic-cta{ animation:none; opacity:1; transform:translateX(-50%); }
+  }
+
   /* ---------- FOOTER ---------- */
   footer{
     text-align:center;
@@ -810,8 +841,20 @@ if (new URLSearchParams(location.search).get("reset") === "1") {
     localStorage.removeItem("gracias-watched-songs");
     localStorage.removeItem("gracias-unlock-celebrated");
     localStorage.removeItem("gracias-interlude-watched");
+    localStorage.removeItem("gracias-dic-limpio");
   } catch (e) {}
 }
+
+/* si ya limpio diciembre.html, aparece la opcion que lleva a la pagina de fotos */
+try {
+  if (localStorage.getItem("gracias-dic-limpio") === "1") {
+    const cta = document.createElement("a");
+    cta.id = "dic-cta";
+    cta.href = "fotos.html";
+    cta.textContent = "dale click Cami ...";
+    document.body.appendChild(cta);
+  }
+} catch (e) {}
 
 document.getElementById("page-title").textContent = CONFIG.pageTitle;
 document.getElementById("page-subtitle").textContent = CONFIG.subtitle;
