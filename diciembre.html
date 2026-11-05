@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nuestro Atardecer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=Caveat:wght@500;700&family=Work+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sun:#ff9a5a;
+    --coral:#ff6f8e;
+    --gold:#f6c667;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    overscroll-behavior:none;
+    background:#120a1c;
+  }
+  body{
+    color:#fff3e4;
+    font-family:"Work Sans", system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -webkit-user-select:none; user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+  }
+
+  /* ---------- la escena limpia (lo que hay debajo del polvo) ---------- */
+  .scene{
+    position:fixed; inset:0; z-index:0;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    padding:24px;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(255,154,90,.42), transparent 60%),
+      linear-gradient(180deg, #2c1a3b 0%, #1b0f28 55%, #120a1c 100%);
+    overflow:hidden;
+  }
+  .stars{ position:absolute; inset:0; }
+  .star{
+    position:absolute; border-radius:50%;
+    background:#fff6ea;
+    animation:twinkle var(--d) ease-in-out var(--delay) infinite;
+  }
+  @keyframes twinkle{ 0%,100%{ opacity:.15; } 50%{ opacity:.95; } }
+
+  .inner{ position:relative; max-width:520px; }
+  .sun{
+    width:min(46vw, 26vh, 200px);
+    aspect-ratio:1;
+    margin:0 auto 26px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe3ad, var(--sun) 45%, var(--coral) 100%);
+    box-shadow:0 0 70px 14px rgba(255,154,90,.5);
+    animation:pulse 6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 70px 14px rgba(255,154,90,.5); }
+    50%{ box-shadow:0 0 95px 22px rgba(255,154,90,.7); }
+  }
+  .eyebrow{
+    font-family:"Caveat", cursive;
+    font-size:1.7rem;
+    color:var(--gold);
+    margin:0 0 4px;
+  }
+  h1{
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:clamp(2.2rem, 8vw, 3.6rem);
+    line-height:1.08;
+    letter-spacing:-.01em;
+    margin:0;
+    color:#fff6ea;
+    text-wrap:balance;
+  }
+  .subtitle{
+    margin:14px 0 0;
+    font-size:1.05rem;
+    color:#f3d9c4;
+  }
+
+  /* ---------- capas de limpieza ---------- */
+  canvas{
+    position:fixed; left:0; top:0;
+    display:block;
+  }
+  #light{ z-index:1; mix-blend-mode:screen; pointer-events:none; }
+  #dirt{
+    z-index:2;
+    touch-action:none;
+    -webkit-touch-callout:none;
+    cursor:grab;
+  }
+  #dirt.drawing{ cursor:grabbing; }
+
+  /* luz que sigue al dedo / mouse mientras se limpia */
+  #torch{
+    position:fixed; left:0; top:0; z-index:4;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,222,165,.46) 0%, rgba(255,170,90,.16) 42%, rgba(255,170,90,0) 70%);
+    mix-blend-mode:screen;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .3s ease;
+    will-change:transform;
+  }
+  #torch.on{ opacity:1; }
+
+  /* motas de polvo flotando */
+  .motes{ position:fixed; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
+  .mote{
+    position:absolute; border-radius:50%;
+    background:rgba(255,236,200,.8);
+    filter:blur(.6px);
+    opacity:0;
+    animation:drift var(--d) ease-in-out var(--delay) infinite;
+  }
+  @keyframes drift{
+    0%{ opacity:0; transform:translate(0,0); }
+    20%,80%{ opacity:var(--o); }
+    100%{ opacity:0; transform:translate(var(--dx), var(--dy)); }
+  }
+
+  #hint{
+    position:fixed; left:0; right:0; z-index:6;
+    bottom:max(30px, calc(env(safe-area-inset-bottom) + 22px));
+    text-align:center;
+    pointer-events:none;
+    font-family:"Caveat", cursive;
+    font-size:1.65rem;
+    color:#f3d9c4;
+    text-shadow:0 2px 14px rgba(0,0,0,.9);
+    animation:hintPulse 2.6s ease-in-out infinite;
+    transition:opacity .7s ease;
+  }
+  @keyframes hintPulse{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+  #hint.gone{ opacity:0; animation:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    .sun, .star, .mote, #hint{ animation:none; }
+    #hint{ opacity:.9; }
+  }
+</style>
+</head>
+<body>
+
+<main class="scene">
+  <div class="stars" id="stars" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="sun"></div>
+    <p class="eyebrow">para ti</p>
+    <h1>Nuestro Atardecer</h1>
+    <p class="subtitle">una playlist hecha con todo mi cariño</p>
+  </div>
+</main>
+
+<canvas id="light" aria-hidden="true"></canvas>
+<canvas id="dirt" aria-hidden="true"></canvas>
+<div class="motes" id="motes" aria-hidden="true"></div>
+<div id="torch" aria-hidden="true"></div>
+<p id="hint">mantén presionado y desliza para limpiar</p>
+
+<script>
+(() => {
+  const dirt  = document.getElementById("dirt");
+  const light = document.getElementById("light");
+  const torch = document.getElementById("torch");
+  const hint  = document.getElementById("hint");
+  const dctx  = dirt.getContext("2d");
+  const lctx  = light.getContext("2d");
+
+  let W, H, DPR, R;
+  const strokes = [];          /* puntos limpiados, normalizados (0-1), para repintar si cambia el tamaño */
+  const MAX_STROKE_VALUES = 80000;
+
+  /* generador pseudoaleatorio con semilla: la suciedad se ve igual cada vez */
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function sizeCanvases(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    for (const c of [dirt, light]) {
+      c.width  = Math.round(W * DPR);
+      c.height = Math.round(H * DPR);
+      c.style.width  = W + "px";
+      c.style.height = H + "px";
+    }
+    dctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    lctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    R = Math.max(44, Math.min(W, H) * 0.1);
+    torch.style.width = torch.style.height = (R * 3.6) + "px";
+  }
+
+  /* ---------- telaraña de esquina ---------- */
+  function web(cx, cy, size, a0, a1, rng){
+    const spokesN = 9, rings = 7;
+    const spokes = [];
+    for (let i = 0; i < spokesN; i++) {
+      spokes.push({
+        a: a0 + (a1 - a0) * i / (spokesN - 1) + (rng() - 0.5) * 0.07,
+        len: size * (0.72 + rng() * 0.28)
+      });
+    }
+    dctx.save();
+    dctx.lineCap = "round";
+
+    dctx.strokeStyle = "rgba(226,228,234,0.42)";
+    dctx.lineWidth = 1.1;
+    dctx.beginPath();
+    for (const s of spokes) {
+      dctx.moveTo(cx, cy);
+      dctx.lineTo(cx + Math.cos(s.a) * s.len, cy + Math.sin(s.a) * s.len);
+    }
+    dctx.stroke();
+
+    dctx.strokeStyle = "rgba(226,228,234,0.32)";
+    dctx.lineWidth = 0.8;
+    for (let k = 1; k <= rings; k++) {
+      const t = k / rings;
+      dctx.beginPath();
+      for (let i = 0; i < spokesN - 1; i++) {
+        const s0 = spokes[i], s1 = spokes[i + 1];
+        const r0 = s0.len * t * (0.94 + rng() * 0.1);
+        const r1 = s1.len * t * (0.94 + rng() * 0.1);
+        if (i === 0) dctx.moveTo(cx + Math.cos(s0.a) * r0, cy + Math.sin(s0.a) * r0);
+        const am = (s0.a + s1.a) / 2;
+        const rm = ((r0 + r1) / 2) * 0.8;               /* la hebra cuelga hacia la esquina */
+        dctx.quadraticCurveTo(
+          cx + Math.cos(am) * rm, cy + Math.sin(am) * rm,
+          cx + Math.cos(s1.a) * r1, cy + Math.sin(s1.a) * r1
+        );
+      }
+      dctx.stroke();
+    }
+    dctx.restore();
+  }
+
+  /* ---------- capa de polvo, mugre y telarañas ---------- */
+  function paintDirt(){
+    const rng = mulberry32(20261204);
+    dctx.globalCompositeOperation = "source-over";
+    dctx.clearRect(0, 0, W, H);
+
+    const base = dctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.15, W / 2, H / 2, Math.hypot(W, H) * 0.6);
+    base.addColorStop(0, "rgba(40,35,31,0.91)");
+    base.addColorStop(1, "rgba(8,7,7,0.97)");
+    dctx.fillStyle = base;
+    dctx.fillRect(0, 0, W, H);
+
+    /* manchas de mugre */
+    const blotches = Math.round(W * H / 5200);
+    for (let i = 0; i < blotches; i++) {
+      const x = rng() * W, y = rng() * H, r = 18 + rng() * 110;
+      const a = 0.04 + rng() * 0.10;
+      const tone = rng() < 0.55 ? "64,50,36" : (rng() < 0.5 ? "20,18,16" : "92,88,80");
+      const g = dctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(${tone},${a})`);
+      g.addColorStop(1, `rgba(${tone},0)`);
+      dctx.fillStyle = g;
+      dctx.beginPath(); dctx.arc(x, y, r, 0, Math.PI * 2); dctx.fill();
+    }
+
+    /* chorreones de humedad */
+    const streaks = Math.max(6, Math.round(W / 70));
+    for (let i = 0; i < streaks; i++) {
+      const x = rng() * W, len = H * (0.2 + rng() * 0.5), w = 6 + rng() * 26;
+      const g = dctx.createLinearGradient(x, 0, x, len);
+      g.addColorStop(0, "rgba(18,15,12,0.24)");
+      g.addColorStop(1, "rgba(18,15,12,0)");
+      dctx.fillStyle = g;
+      dctx.fillRect(x - w / 2, 0, w, len);
+    }
+
+    /* motitas de polvo fino */
+    const specks = Math.round(W * H / 320);
+    for (let i = 0; i < specks; i++) {
+      const x = rng() * W, y = rng() * H, s = 0.5 + rng() * 1.6;
+      dctx.fillStyle = `rgba(${190 + rng() * 50 | 0},${185 + rng() * 45 | 0},${170 + rng() * 40 | 0},${0.05 + rng() * 0.22})`;
+      dctx.fillRect(x, y, s, s);
+    }
+
+    /* telarañas en las esquinas */
+    web(0, 0, Math.min(W * 0.55, H * 0.5),  0,               Math.PI / 2,      rng);
+    web(W, 0, Math.min(W * 0.55, H * 0.5),  Math.PI / 2,     Math.PI,          rng);
+    web(0, H, Math.min(W * 0.5,  H * 0.3),  -Math.PI / 2,    0,                rng);
+    web(W, H, Math.min(W * 0.42, H * 0.26), Math.PI,         Math.PI * 1.5,    rng);
+
+    /* hebras sueltas colgando del borde de arriba */
+    dctx.save();
+    dctx.lineCap = "round";
+    dctx.strokeStyle = "rgba(226,228,234,0.30)";
+    dctx.lineWidth = 0.9;
+    for (let i = 0; i < 6; i++) {
+      const x0 = W * (0.18 + rng() * 0.64), len = H * (0.05 + rng() * 0.15);
+      dctx.beginPath();
+      dctx.moveTo(x0, 0);
+      dctx.quadraticCurveTo(x0 + (rng() - 0.5) * 44, len * 0.5, x0 + (rng() - 0.5) * 30, len);
+      dctx.stroke();
+    }
+    dctx.restore();
+  }
+
+  /* ---------- limpiar: borra el polvo y deja un resplandor tibio ---------- */
+  function clean(x, y){
+    dctx.save();
+    dctx.globalCompositeOperation = "destination-out";
+    const g = dctx.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, "rgba(0,0,0,1)");
+    g.addColorStop(0.55, "rgba(0,0,0,0.92)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    dctx.fillStyle = g;
+    dctx.beginPath(); dctx.arc(x, y, R, 0, Math.PI * 2); dctx.fill();
+    dctx.restore();
+
+    const lg = lctx.createRadialGradient(x, y, 0, x, y, R * 1.25);
+    lg.addColorStop(0, "rgba(255,196,120,0.05)");
+    lg.addColorStop(1, "rgba(255,196,120,0)");
+    lctx.fillStyle = lg;
+    lctx.beginPath(); lctx.arc(x, y, R * 1.25, 0, Math.PI * 2); lctx.fill();
+  }
+
+  function stamp(x, y){
+    clean(x, y);
+    if (strokes.length < MAX_STROKE_VALUES) strokes.push(x / W, y / H);
+  }
+
+  function replay(){
+    for (let i = 0; i < strokes.length; i += 2) clean(strokes[i] * W, strokes[i + 1] * H);
+  }
+
+  /* ---------- interacción ---------- */
+  let activePointer = null;
+  let last = null;
+
+  function strokeTo(x, y){
+    if (!last) { stamp(x, y); last = { x, y }; return; }
+    const dx = x - last.x, dy = y - last.y;
+    const dist = Math.hypot(dx, dy);
+    const n = Math.max(1, Math.floor(dist / (R * 0.3)));
+    for (let i = 1; i <= n; i++) stamp(last.x + dx * i / n, last.y + dy * i / n);
+    last = { x, y };
+  }
+
+  function moveTorch(x, y){
+    const half = parseFloat(torch.style.width) / 2;
+    torch.style.transform = `translate(${x - half}px, ${y - half}px)`;
+  }
+
+  function hideHint(){ hint.classList.add("gone"); }
+
+  dirt.addEventListener("pointerdown", (e) => {
+    if (activePointer !== null) return;
+    activePointer = e.pointerId;
+    last = null;
+    try { dirt.setPointerCapture(e.pointerId); } catch (err) {}
+    dirt.classList.add("drawing");
+    moveTorch(e.clientX, e.clientY);
+    torch.classList.add("on");
+    strokeTo(e.clientX, e.clientY);
+    hideHint();
+  });
+
+  dirt.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== activePointer) return;
+    moveTorch(e.clientX, e.clientY);
+    strokeTo(e.clientX, e.clientY);
+  });
+
+  function endStroke(e){
+    if (e.pointerId !== activePointer) return;
+    activePointer = null;
+    last = null;
+    dirt.classList.remove("drawing");
+    torch.classList.remove("on");
+  }
+  dirt.addEventListener("pointerup", endStroke);
+  dirt.addEventListener("pointercancel", endStroke);
+  dirt.addEventListener("lostpointercapture", endStroke);
+  dirt.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  /* ---------- ambiente: estrellas escondidas y motas de polvo ---------- */
+  function buildStars(){
+    const box = document.getElementById("stars");
+    const rng = mulberry32(77);
+    for (let i = 0; i < 46; i++) {
+      const s = document.createElement("span");
+      s.className = "star";
+      const size = 1 + rng() * 2.2;
+      s.style.cssText = `left:${rng() * 100}%;top:${rng() * 58}%;width:${size}px;height:${size}px;--d:${2 + rng() * 4}s;--delay:${rng() * 4}s`;
+      box.appendChild(s);
+    }
+  }
+
+  function buildMotes(){
+    const box = document.getElementById("motes");
+    for (let i = 0; i < 22; i++) {
+      const m = document.createElement("span");
+      m.className = "mote";
+      const size = 1.5 + Math.random() * 3;
+      m.style.cssText =
+        `left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${size}px;height:${size}px;` +
+        `--d:${9 + Math.random() * 10}s;--delay:${-Math.random() * 14}s;--o:${0.25 + Math.random() * 0.4};` +
+        `--dx:${(Math.random() - 0.5) * 70}px;--dy:${-30 - Math.random() * 80}px`;
+      box.appendChild(m);
+    }
+  }
+
+  function rebuild(){
+    sizeCanvases();
+    paintDirt();
+    replay();
+  }
+
+  let resizeTimer;
+  let lastW = window.innerWidth, lastH = window.innerHeight;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (window.innerWidth === lastW && window.innerHeight === lastH) return;
+      lastW = window.innerWidth; lastH = window.innerHeight;
+      rebuild();
+    }, 150);
+  });
+
+  buildStars();
+  buildMotes();
+  rebuild();
+})();
+</script>
+</body>
+</html>
