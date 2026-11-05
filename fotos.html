@@ -353,9 +353,11 @@
   .lb-notewrap.open{ grid-template-columns:1fr; }
   .lb-note{ min-width:0; overflow:hidden; }
   .lb-note-in{
-    width:300px;
+    --w:250px;                                  /* ancho del video: vertical 250, horizontal 400 */
+    --ratio:.5625;
+    width:calc(var(--w) + 56px);
     margin-left:26px;
-    padding:18px 20px 20px;
+    padding:14px 20px 20px;
     background:
       radial-gradient(90% 80% at 25% 10%, rgba(255,255,255,.07), transparent 60%),
       #242423;
@@ -363,13 +365,35 @@
     border-color:var(--wood-edge);
     border-radius:5px;
     box-shadow:0 22px 40px -16px rgba(0,0,0,.9), inset 0 0 30px rgba(0,0,0,.5);
-    max-height:min(560px, 78vh);
-    overflow-y:auto;
   }
-  .lb-note-in .e{ font-size:1.25rem; color:#f2d9a0; margin:0 0 6px; }
-  .lb-note-in .body{ font-size:1.6rem; line-height:1.22; margin:0; }
-  .lb-note-in .dim{ opacity:.55; }
-  .lb-note-in .sig{ font-size:1.35rem; color:#f2d9a0; text-align:right; margin:12px 0 0; }
+  .lb-note-in.wide{ --w:400px; }
+  .lb-note-in .e{ font-size:1.25rem; color:#f2d9a0; margin:0 0 8px; }
+  .lb-note-in .sig{ font-size:1.3rem; color:#f2d9a0; text-align:right; margin:10px 0 0; }
+  .vscreen{
+    position:relative;
+    width:min(100%, calc(66vh * var(--ratio)));
+    aspect-ratio:var(--ratio);
+    margin:0 auto;
+    overflow:hidden;
+    background:#07050b;
+    border-radius:3px;
+  }
+  .vscreen video{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
+  .vscreen.empty{
+    background:
+      radial-gradient(70% 60% at 50% 40%, rgba(255,154,90,.22), transparent 70%),
+      linear-gradient(160deg, #241532, #130b1d);
+  }
+  .vscreen.empty .screen-in{
+    position:absolute; inset:8px;
+    border:1.5px dashed rgba(255,214,170,.32);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:12px;
+    color:#f3d9c4;
+  }
+  .vscreen .playdot{ width:60px; height:60px; font-size:1.5rem; padding-left:4px; }
+  .vscreen .ph-text{ font-size:1.3rem; color:#f3d9c4; text-align:center; padding:0 10px; line-height:1.1; }
 
   .lb-close, .lb-nav{
     position:fixed; z-index:5;
@@ -410,8 +434,8 @@
     }
     .lb-notewrap.open{ grid-template-rows:1fr; }
     .lb-note{ min-height:0; }
-    .lb-note-in{ width:min(300px, 74vw); margin:20px auto 0; max-height:none; }
-    .lb-note-in .body{ font-size:1.5rem; }
+    .lb-note-in, .lb-note-in.wide{ --w:min(250px, 62vw); width:calc(var(--w) + 44px); margin:20px auto 0; padding:12px 14px 16px; }
+    .lb-note-in.wide{ --w:min(300px, 74vw); }
     .lb-nav{ top:auto; bottom:16px; margin-top:0; width:42px; height:42px; }
     .lb-nav.prev{ left:18px; }
     .lb-nav.next{ right:18px; }
@@ -457,7 +481,6 @@
 
 <main class="wall" id="wall">
   <div id="rows"></div>
-  <section class="reaction" id="reaction" aria-label="Mi reacción en video"></section>
 </main>
 
 <footer>
@@ -492,12 +515,12 @@
                src     → ruta de la foto (ej. "media/fotos/01.jpg").
                          Déjalo vacío "" y se ve el hueco con su marco.
                caption → texto chiquito debajo de la foto (opcional)
-               comment → TU comentario: aparece al tocar la foto, en un
-                         recuadro que se despliega al lado de la foto
-                         ampliada.
-   REACTION → tu video del final (igual que INTRO).
+               video   → TU comentario en video (ej. "media/fotos/01.mp4"):
+                         al tocar la foto se despliega al lado de la foto
+                         ampliada y se reproduce solo.
+               poster  → imagen de portada del video (opcional)
    Los videos se ajustan solos a horizontal o vertical.
-   Mándame las fotos, los comentarios y los videos y yo los pongo aquí.
+   Mándame las fotos y los videos y yo los pongo aquí.
    ===================================================================== */
 
 const INTRO = {
@@ -515,25 +538,17 @@ const SIGN = {
 };
 
 const PHOTOS = [
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" },
-  { src: "", caption: "", comment: "" }
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" },
+  { src: "", caption: "", video: "", poster: "" }
 ];
-
-const REACTION = {
-  eyebrow: "y ahora, mírame a mí",
-  title: "Mi reacción",
-  video: "",
-  poster: "",
-  caption: ""
-};
 
 /* ------------------------- render (no tocar) ------------------------- */
 document.getElementById("sign-1").textContent = SIGN.line1;
@@ -572,10 +587,43 @@ function lbFill(i){
   const p = PHOTOS[i];
   lbPhoto.classList.toggle("empty", !p.src);
   lbIn.innerHTML = frameInner(p, i);
+  lbNoteIn.classList.remove("wide");
+  lbNoteIn.style.setProperty("--ratio", ".5625");
   lbNoteIn.innerHTML = `
     <p class="chalk e">mi comentario</p>
-    <p class="chalk body">${p.comment ? p.comment : `<span class="dim">aquí va mi comentario sobre esta foto</span>`}</p>
+    <div class="vscreen${p.video ? "" : " empty"}">
+      ${p.video
+        ? `<video controls playsinline preload="metadata" poster="${p.poster || ""}">
+             <source src="${p.video}" type="video/mp4">
+           </video>`
+        : `<div class="screen-in">
+             <div class="playdot">▶</div>
+             <span class="ph-text">aquí va mi video comentario</span>
+           </div>`}
+    </div>
     <p class="chalk sig">— Marcelo</p>`;
+
+  /* el recuadro se adapta a video vertical u horizontal segun el archivo real */
+  const v = lbNoteIn.querySelector("video");
+  if (v) {
+    const fit = () => {
+      if (!v.videoWidth || !v.videoHeight) return;
+      const r = v.videoWidth / v.videoHeight;
+      lbNoteIn.style.setProperty("--ratio", r);
+      lbNoteIn.classList.toggle("wide", r >= 1);
+    };
+    v.addEventListener("loadedmetadata", fit);
+    fit();
+  }
+}
+
+/* reproduce el video comentario de la foto abierta (tocar la foto cuenta como permiso para sonar) */
+function lbPlay(){
+  const v = lbNoteIn.querySelector("video");
+  if (v) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }
+}
+function lbStop(){
+  lbNoteIn.querySelectorAll("video").forEach(v => { v.pause(); });
 }
 
 function openLightbox(i){
@@ -605,12 +653,13 @@ function openLightbox(i){
   lbPhoto.style.transform = "none";
 
   /* y cuando ya esta grande, se despliega el comentario al lado */
-  lbTimer = setTimeout(() => lbNoteWrap.classList.add("open"), 430);
+  lbTimer = setTimeout(() => { lbNoteWrap.classList.add("open"); lbPlay(); }, 430);
 }
 
 function closeLightbox(){
   if (!lb.classList.contains("show")) return;
   clearTimeout(lbTimer);
+  lbStop();
   lbNoteWrap.classList.remove("open");
   lbPhoto.style.transition = "transform .3s ease";
   lbPhoto.style.transform = "scale(.9)";
@@ -630,11 +679,13 @@ function lbGo(j){
   lbIndex = j;
   lbThumb = frameEls[j];
   lbThumb.style.visibility = "hidden";
+  lbStop();
   const fades = lb.querySelectorAll(".lb-fade");
   fades.forEach(el => el.classList.add("swap"));
   setTimeout(() => {
     lbFill(j);
     fades.forEach(el => el.classList.remove("swap"));
+    if (lbNoteWrap.classList.contains("open")) lbPlay();
   }, 170);
 }
 
@@ -754,7 +805,6 @@ function mountVideo(el, cfg, emptyLabel){
 }
 
 const introVideo = mountVideo(document.getElementById("intro-body"), INTRO, "aquí va el video de introducción");
-mountVideo(document.getElementById("reaction"), REACTION, "aquí va mi video");
 
 /* "sigue bajando": lleva a la pared de fotos; brilla mas cuando termina la introduccion */
 const cue = document.getElementById("cue");
