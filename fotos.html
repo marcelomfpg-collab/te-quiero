@@ -32,6 +32,43 @@
   }
   h1,h2{ margin:0; }
   .script{ font-family:"Caveat", cursive; }
+  .chalk{
+    font-family:"Caveat", cursive;
+    color:#f4efe6;
+    text-shadow:0 0 1.5px rgba(255,255,255,.7), 0 0 14px rgba(255,255,255,.1);
+  }
+
+  /* ---------- seccion de introduccion (antes de la pared) ---------- */
+  .intro{
+    min-height:100vh;
+    min-height:100svh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:26px 14px 18px;
+    text-align:center;
+  }
+  .intro .rope{ width:100%; max-width:880px; margin-bottom:6px; }
+  .intro .wire path{ stroke:#3c4d39; }
+  .intro .cinema{
+    width:min(100%, 760px);
+    animation:lower 1.3s cubic-bezier(.2,.7,.2,1) .5s backwards;     /* el "telon" baja desde las luces */
+  }
+  @keyframes lower{
+    from{ clip-path:inset(0 0 100% 0); opacity:.2; }
+    to  { clip-path:inset(0 0 0 0); opacity:1; }
+  }
+  .cue{
+    margin-top:26px;
+    background:none; border:0; padding:6px 12px;
+    font-family:"Caveat", cursive;
+    font-size:1.55rem;
+    color:#f3d9c4;
+    cursor:pointer;
+    animation:bob 2.2s ease-in-out infinite;
+    transition:color .4s ease, text-shadow .4s ease;
+  }
+  .cue.hot{ color:var(--gold); text-shadow:0 0 18px rgba(246,198,103,.8); }
+  @keyframes bob{ 50%{ transform:translateY(7px); } }
 
   /* ---------- letrero de pizarra ---------- */
   .signwrap{ position:relative; z-index:3; padding:34px 16px 0; }
@@ -48,11 +85,6 @@
     border-color:var(--wood-edge);
     border-radius:4px;
     box-shadow:0 22px 40px -14px rgba(0,0,0,.85), inset 0 0 0 2px rgba(0,0,0,.4), inset 0 0 46px rgba(0,0,0,.55);
-  }
-  .chalk{
-    font-family:"Caveat", cursive;
-    color:#f4efe6;
-    text-shadow:0 0 1.5px rgba(255,255,255,.7), 0 0 14px rgba(255,255,255,.1);
   }
   .sign .l1{ font-size:1.7rem; margin:0; }
   .sign h1{
@@ -138,11 +170,13 @@
     box-shadow:0 16px 26px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.06);
     transform-origin:50% 0;
     transform:rotate(var(--r));
+    cursor:pointer;
     animation:
       sway calc(5s + var(--i) * .35s) ease-in-out infinite alternate,
       rise .8s cubic-bezier(.2,.7,.2,1) backwards;
     animation-delay:0s, calc(var(--i) * 80ms + 150ms);
   }
+  .frame:focus-visible{ outline:3px solid var(--gold); outline-offset:5px; }
   @keyframes sway{
     from{ transform:rotate(calc(var(--r) - 1.3deg)); }
     to  { transform:rotate(calc(var(--r) + 1.3deg)); }
@@ -170,7 +204,8 @@
   .photo img{ width:100%; height:100%; object-fit:cover; display:block; }
 
   /* hueco vacio, listo para recibir la foto */
-  .frame.empty .photo{
+  .frame.empty .photo,
+  .lb-photo.empty .photo{
     background:
       repeating-linear-gradient(45deg, rgba(58,36,64,.045) 0 10px, transparent 10px 20px),
       linear-gradient(160deg, #f6e3cf, #ecc9b0);
@@ -209,7 +244,7 @@
   }
   .soft{ color:var(--ink-soft); opacity:.75; }
 
-  /* ---------- mi reaccion en video ---------- */
+  /* ---------- placa de pizarra y marco de video (mi reaccion / introduccion) ---------- */
   .reaction{ text-align:center; padding:6px 0 10px; }
   .plate{
     display:inline-block;
@@ -240,7 +275,7 @@
   }
   .screen{
     aspect-ratio:var(--ratio);
-    width:min(100%, calc(78vh * var(--ratio)));
+    width:min(100%, calc(70vh * var(--ratio)));
     margin:0 auto;
     overflow:hidden;
     background:#07050b;
@@ -261,6 +296,7 @@
     color:#f3d9c4;
   }
   .playdot{
+    flex:none;
     width:76px; height:76px;
     border-radius:50%;
     border:2px solid var(--gold);
@@ -270,7 +306,7 @@
     padding-left:6px;
     box-shadow:0 0 34px rgba(246,198,103,.28);
   }
-  .screen-in .ph-text{ font-size:1.45rem; color:#f3d9c4; }
+  .screen-in .ph-text{ font-size:1.45rem; color:#f3d9c4; text-align:center; padding:0 10px; }
   .cinema-cap{
     margin:14px 6px 4px;
     font-family:"Caveat", cursive;
@@ -278,6 +314,80 @@
     color:#fff3e4;
     text-shadow:0 2px 10px rgba(0,0,0,.7);
   }
+
+  /* ---------- foto ampliada + comentario que se despliega al lado ---------- */
+  .lb{
+    position:fixed; inset:0; z-index:100;
+    display:flex;
+    overflow-y:auto;
+    padding:62px 16px 30px;
+    background:rgba(10,6,10,.93);
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, visibility 0s linear .35s;
+  }
+  .lb.show{ opacity:1; visibility:visible; transition:opacity .35s ease; }
+  .lb-stage{ margin:auto; display:flex; align-items:center; justify-content:center; }
+  .lb-photo{
+    position:relative;
+    flex:none;
+    margin:0;
+    width:min(400px, 44vw);
+    background:var(--paper);
+    padding:14px 14px 0;
+    border-radius:4px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .lb-photo figcaption{ font-size:1.5rem; padding:12px 4px 16px; min-height:3.4em; }
+  .lb-photo .num{ width:30px; height:30px; font-size:.82rem; }
+  .lb-photo .ph-text{ font-size:1.5rem; }
+  .lb-photo .ph-icon{ font-size:2.6rem; }
+  .lb-fade{ transition:opacity .17s ease; }
+  .lb-fade.swap{ opacity:0; }
+
+  /* el comentario: un recuadro que se abre hacia un lado */
+  .lb-notewrap{
+    display:grid;
+    grid-template-columns:0fr;
+    transition:grid-template-columns .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .lb-notewrap.open{ grid-template-columns:1fr; }
+  .lb-note{ min-width:0; overflow:hidden; }
+  .lb-note-in{
+    width:300px;
+    margin-left:26px;
+    padding:18px 20px 20px;
+    background:
+      radial-gradient(90% 80% at 25% 10%, rgba(255,255,255,.07), transparent 60%),
+      #242423;
+    border:8px solid;
+    border-color:var(--wood-edge);
+    border-radius:5px;
+    box-shadow:0 22px 40px -16px rgba(0,0,0,.9), inset 0 0 30px rgba(0,0,0,.5);
+    max-height:min(560px, 78vh);
+    overflow-y:auto;
+  }
+  .lb-note-in .e{ font-size:1.25rem; color:#f2d9a0; margin:0 0 6px; }
+  .lb-note-in .body{ font-size:1.6rem; line-height:1.22; margin:0; }
+  .lb-note-in .dim{ opacity:.55; }
+  .lb-note-in .sig{ font-size:1.35rem; color:#f2d9a0; text-align:right; margin:12px 0 0; }
+
+  .lb-close, .lb-nav{
+    position:fixed; z-index:5;
+    width:44px; height:44px;
+    border-radius:50%;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.24);
+    color:#fff6ea;
+    font-size:1.7rem; line-height:1;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 0 3px;
+  }
+  .lb-close{ top:14px; right:14px; font-size:1.9rem; }
+  .lb-nav{ top:50%; margin-top:-22px; }
+  .lb-nav.prev{ left:14px; }
+  .lb-nav.next{ right:14px; }
+  .lb-close:hover, .lb-nav:hover{ background:rgba(255,255,255,.2); }
 
   /* ---------- pie ---------- */
   footer{ text-align:center; padding:44px 20px 54px; color:#8f7388; font-size:.85rem; }
@@ -288,6 +398,24 @@
   footer p{ margin:16px 0 0; }
 
   /* ---------- celular ---------- */
+  @media (max-width:759px){
+    .lb{ padding:60px 16px 74px; }
+    .lb-stage{ flex-direction:column; }
+    .lb-photo{ width:min(300px, 74vw); padding:12px 12px 0; }
+    .lb-photo figcaption{ font-size:1.3rem; min-height:3em; }
+    .lb-notewrap{
+      grid-template-columns:1fr;
+      grid-template-rows:0fr;
+      transition:grid-template-rows .7s cubic-bezier(.2,.8,.2,1);
+    }
+    .lb-notewrap.open{ grid-template-rows:1fr; }
+    .lb-note{ min-height:0; }
+    .lb-note-in{ width:min(300px, 74vw); margin:20px auto 0; max-height:none; }
+    .lb-note-in .body{ font-size:1.5rem; }
+    .lb-nav{ top:auto; bottom:16px; margin-top:0; width:42px; height:42px; }
+    .lb-nav.prev{ left:18px; }
+    .lb-nav.next{ right:18px; }
+  }
   @media (max-width:599px){
     .wall{ padding-top:40px; }
     figcaption{ font-size:1.05rem; padding:8px 2px 11px; min-height:3em; gap:6px; }
@@ -295,16 +423,31 @@
     .ph-text{ font-size:1.08rem; }
     .ph-icon{ font-size:1.6rem; }
     .plate h2{ font-size:1.9rem; }
+    .playdot{ width:56px; height:56px; font-size:1.5rem; padding-left:4px; }
+    .cinema.empty .screen-in{ gap:8px; }
+    .screen-in .ph-text{ font-size:1.2rem; line-height:1.1; }
+    .lb-photo figcaption{ font-size:1.3rem; }
+    .lb-photo .num{ width:28px; height:28px; font-size:.78rem; }
+    .lb-photo .ph-text{ font-size:1.4rem; }
+    .lb-photo .ph-icon{ font-size:2.2rem; }
   }
 
   @media (prefers-reduced-motion: reduce){
-    .frame, .cinema, .bulb{ animation:none; }
+    .frame, .cinema, .bulb, .cue, .intro .cinema{ animation:none; }
+    .lb-notewrap{ transition:none; }
   }
 </style>
 </head>
 <body>
 
-<header class="signwrap">
+<!-- 1) introduccion: el video que se despliega antes de ver las fotos -->
+<section class="intro" id="intro" aria-label="Introducción">
+  <div class="reaction" id="intro-body"></div>
+  <button class="cue" id="cue" type="button">sigue bajando ↓</button>
+</section>
+
+<!-- 2) la pared de fotos -->
+<header class="signwrap" id="wall-top">
   <div class="sign">
     <p class="chalk l1" id="sign-1"></p>
     <h1 class="chalk" id="sign-title"></h1>
@@ -323,22 +466,47 @@
   <p><a href="index.html">← volver a las canciones</a></p>
 </footer>
 
+<!-- foto ampliada + comentario -->
+<div class="lb" id="lb" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Foto ampliada">
+  <button class="lb-close" id="lb-close" type="button" aria-label="Cerrar">×</button>
+  <button class="lb-nav prev" id="lb-prev" type="button" aria-label="Foto anterior">‹</button>
+  <button class="lb-nav next" id="lb-next" type="button" aria-label="Foto siguiente">›</button>
+  <div class="lb-stage" id="lb-stage">
+    <figure class="lb-photo" id="lb-photo"><div class="lb-fade" id="lb-in"></div></figure>
+    <div class="lb-notewrap" id="lb-notewrap">
+      <div class="lb-note"><div class="lb-note-in lb-fade" id="lb-note-in"></div></div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =====================================================================
    ✏️  CÓMO LLENAR ESTA PÁGINA
    -----------------------------------------------------------------
-   SIGN    → los textos del letrero de pizarra de arriba.
-   PHOTOS  → las 10 fotos. Cada una tiene:
+   INTRO    → el video de introducción (la primera sección):
+               video   → ruta del video (ej. "media/fotos/intro.mp4")
+               poster  → imagen de portada (opcional)
+               eyebrow / title / caption → los textos de la sección
+   SIGN     → los textos del letrero de pizarra sobre la pared de fotos.
+   PHOTOS   → las 10 fotos. Cada una tiene:
                src     → ruta de la foto (ej. "media/fotos/01.jpg").
                          Déjalo vacío "" y se ve el hueco con su marco.
-               caption → texto chiquito debajo (opcional)
-   REACTION → tu video:
-               video   → ruta del video (ej. "media/fotos/reaccion.mp4")
-               poster  → imagen de portada (opcional)
-               title / eyebrow / caption → los textos de la sección
-             El video se ajusta solo a horizontal o vertical.
-   Mándame las fotos y el video y yo los pongo aquí.
+               caption → texto chiquito debajo de la foto (opcional)
+               comment → TU comentario: aparece al tocar la foto, en un
+                         recuadro que se despliega al lado de la foto
+                         ampliada.
+   REACTION → tu video del final (igual que INTRO).
+   Los videos se ajustan solos a horizontal o vertical.
+   Mándame las fotos, los comentarios y los videos y yo los pongo aquí.
    ===================================================================== */
+
+const INTRO = {
+  eyebrow: "antes de empezar",
+  title: "Mira esto primero",
+  video: "",
+  poster: "",
+  caption: ""
+};
 
 const SIGN = {
   line1: "para ti, Cami",
@@ -347,16 +515,16 @@ const SIGN = {
 };
 
 const PHOTOS = [
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" },
-  { src: "", caption: "" }
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" },
+  { src: "", caption: "", comment: "" }
 ];
 
 const REACTION = {
@@ -376,13 +544,19 @@ const ROT = [-2.4, 1.8, -1.2, 2.6, -2, 1.2, -2.8, 2.1, -1.5, 2.4];
 const SAG = 34;                                   /* cuanto cuelga la cuerda en el centro (px) */
 const wireY = (t) => 3 + 4 * SAG * t * (1 - t);   /* altura de la cuerda en la posicion t (0-1) */
 
-function makeFrame(p, i){
+/* ---------- foto ampliada con comentario ---------- */
+const lb = document.getElementById("lb");
+const lbStage = document.getElementById("lb-stage");
+const lbPhoto = document.getElementById("lb-photo");
+const lbIn = document.getElementById("lb-in");
+const lbNoteWrap = document.getElementById("lb-notewrap");
+const lbNoteIn = document.getElementById("lb-note-in");
+let lbIndex = -1, lbThumb = null, lbTimer = null;
+let frameEls = [];
+
+function frameInner(p, i){
   const n = String(i + 1).padStart(2, "0");
-  const fig = document.createElement("figure");
-  fig.className = "frame" + (p.src ? "" : " empty");
-  fig.style.setProperty("--r", ROT[i % ROT.length] + "deg");
-  fig.style.setProperty("--i", i);
-  fig.innerHTML = `
+  return `
     <div class="photo">
       ${p.src
         ? `<img src="${p.src}" alt="${p.caption || "recuerdo " + n}" loading="lazy">`
@@ -391,8 +565,105 @@ function makeFrame(p, i){
     <figcaption>
       <span class="num">${n}</span>
       ${p.caption ? `<span>${p.caption}</span>` : `<span class="soft">aquí va el recuerdo</span>`}
-    </figcaption>
-  `;
+    </figcaption>`;
+}
+
+function lbFill(i){
+  const p = PHOTOS[i];
+  lbPhoto.classList.toggle("empty", !p.src);
+  lbIn.innerHTML = frameInner(p, i);
+  lbNoteIn.innerHTML = `
+    <p class="chalk e">mi comentario</p>
+    <p class="chalk body">${p.comment ? p.comment : `<span class="dim">aquí va mi comentario sobre esta foto</span>`}</p>
+    <p class="chalk sig">— Marcelo</p>`;
+}
+
+function openLightbox(i){
+  const thumb = frameEls[i];
+  if (!thumb) return;
+  clearTimeout(lbTimer);
+  lbIndex = i;
+  lbThumb = thumb;
+  lbFill(i);
+  lbNoteWrap.classList.remove("open");
+  lb.classList.add("show");
+  lb.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+
+  /* la foto "se despega" de la pared: arranca del tamano y lugar de la miniatura y crece al centro */
+  lbPhoto.style.transition = "none";
+  lbPhoto.style.transform = "none";
+  const t = thumb.getBoundingClientRect();
+  const f = lbPhoto.getBoundingClientRect();
+  const dx = (t.left + t.width / 2) - (f.left + f.width / 2);
+  const dy = (t.top + t.height / 2) - (f.top + f.height / 2);
+  const s = thumb.offsetWidth / f.width;
+  lbPhoto.style.transform = `translate(${dx}px, ${dy}px) scale(${s}) rotate(${ROT[i % ROT.length]}deg)`;
+  thumb.style.visibility = "hidden";
+  void lbPhoto.offsetWidth;
+  lbPhoto.style.transition = "transform .62s cubic-bezier(.2,.8,.2,1)";
+  lbPhoto.style.transform = "none";
+
+  /* y cuando ya esta grande, se despliega el comentario al lado */
+  lbTimer = setTimeout(() => lbNoteWrap.classList.add("open"), 430);
+}
+
+function closeLightbox(){
+  if (!lb.classList.contains("show")) return;
+  clearTimeout(lbTimer);
+  lbNoteWrap.classList.remove("open");
+  lbPhoto.style.transition = "transform .3s ease";
+  lbPhoto.style.transform = "scale(.9)";
+  lb.classList.remove("show");
+  lb.setAttribute("aria-hidden", "true");
+  if (lbThumb) lbThumb.style.visibility = "";
+  document.body.style.overflow = "";
+  lbIndex = -1;
+  lbThumb = null;
+}
+
+function lbGo(j){
+  const n = PHOTOS.length;
+  j = (j + n) % n;
+  if (lbIndex < 0 || j === lbIndex || !frameEls[j]) return;
+  if (lbThumb) lbThumb.style.visibility = "";
+  lbIndex = j;
+  lbThumb = frameEls[j];
+  lbThumb.style.visibility = "hidden";
+  const fades = lb.querySelectorAll(".lb-fade");
+  fades.forEach(el => el.classList.add("swap"));
+  setTimeout(() => {
+    lbFill(j);
+    fades.forEach(el => el.classList.remove("swap"));
+  }, 170);
+}
+
+document.getElementById("lb-close").addEventListener("click", closeLightbox);
+document.getElementById("lb-prev").addEventListener("click", () => lbGo(lbIndex - 1));
+document.getElementById("lb-next").addEventListener("click", () => lbGo(lbIndex + 1));
+lb.addEventListener("click", (e) => { if (e.target === lb || e.target === lbStage) closeLightbox(); });
+document.addEventListener("keydown", (e) => {
+  if (!lb.classList.contains("show")) return;
+  if (e.key === "Escape") closeLightbox();
+  else if (e.key === "ArrowLeft") lbGo(lbIndex - 1);
+  else if (e.key === "ArrowRight") lbGo(lbIndex + 1);
+});
+
+/* ---------- la pared ---------- */
+function makeFrame(p, i){
+  const n = String(i + 1).padStart(2, "0");
+  const fig = document.createElement("figure");
+  fig.className = "frame" + (p.src ? "" : " empty");
+  fig.style.setProperty("--r", ROT[i % ROT.length] + "deg");
+  fig.style.setProperty("--i", i);
+  fig.tabIndex = 0;
+  fig.setAttribute("role", "button");
+  fig.setAttribute("aria-label", "Ver la foto " + n + " y mi comentario");
+  fig.innerHTML = frameInner(p, i);
+  fig.addEventListener("click", () => openLightbox(i));
+  fig.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openLightbox(i); }
+  });
   return fig;
 }
 
@@ -434,49 +705,63 @@ function makeRope(slice, K, startIndex){
 /* celular: 2 fotos por cuerda; pantalla grande: 5 por cuerda */
 const bigScreen = window.matchMedia("(min-width:900px)");
 function buildRows(){
+  closeLightbox();
   const K = bigScreen.matches ? 5 : 2;
   const rows = document.getElementById("rows");
   rows.innerHTML = "";
   for (let s = 0; s < PHOTOS.length; s += K) {
     rows.appendChild(makeRope(PHOTOS.slice(s, s + K), K, s));
   }
+  frameEls = [...rows.querySelectorAll(".frame")];
 }
 buildRows();
 if (bigScreen.addEventListener) bigScreen.addEventListener("change", buildRows);
 else bigScreen.addListener(buildRows);
 
-/* seccion del video: luces arriba, placa de pizarra y el marco de madera */
-const reaction = document.getElementById("reaction");
-reaction.innerHTML = `
-  <div class="plate">
-    <p class="chalk e">${REACTION.eyebrow}</p>
-    <h2 class="chalk">${REACTION.title}</h2>
-  </div>
-  <div class="cinema${REACTION.video ? "" : " empty"}" id="cinema">
-    <div class="screen">
-      ${REACTION.video
-        ? `<video controls playsinline preload="metadata" poster="${REACTION.poster || ""}">
-             <source src="${REACTION.video}" type="video/mp4">
-           </video>`
-        : `<div class="screen-in">
-             <div class="playdot">▶</div>
-             <span class="ph-text">aquí va mi video</span>
-           </div>`}
+/* ---------- secciones de video: luces arriba, placa de pizarra y marco de madera ---------- */
+function mountVideo(el, cfg, emptyLabel){
+  el.innerHTML = `
+    <div class="plate">
+      <p class="chalk e">${cfg.eyebrow}</p>
+      <h2 class="chalk">${cfg.title}</h2>
     </div>
-  </div>
-  ${REACTION.caption ? `<p class="cinema-cap">${REACTION.caption}</p>` : ""}
-`;
-reaction.prepend(makeRope([], 1, 0));
+    <div class="cinema${cfg.video ? "" : " empty"}">
+      <div class="screen">
+        ${cfg.video
+          ? `<video controls playsinline preload="metadata" poster="${cfg.poster || ""}">
+               <source src="${cfg.video}" type="video/mp4">
+             </video>`
+          : `<div class="screen-in">
+               <div class="playdot">▶</div>
+               <span class="ph-text">${emptyLabel}</span>
+             </div>`}
+      </div>
+    </div>
+    ${cfg.caption ? `<p class="cinema-cap">${cfg.caption}</p>` : ""}
+  `;
+  el.prepend(makeRope([], 1, 0));
 
-/* el marco del video se adapta a horizontal o vertical segun el archivo real */
-const rv = reaction.querySelector("video");
-if (rv) {
-  rv.addEventListener("loadedmetadata", () => {
-    if (rv.videoWidth && rv.videoHeight) {
-      document.getElementById("cinema").style.setProperty("--ratio", rv.videoWidth / rv.videoHeight);
-    }
-  });
+  /* el marco se adapta a horizontal o vertical segun el archivo real */
+  const v = el.querySelector("video");
+  if (v) {
+    v.addEventListener("loadedmetadata", () => {
+      if (v.videoWidth && v.videoHeight) {
+        el.querySelector(".cinema").style.setProperty("--ratio", v.videoWidth / v.videoHeight);
+      }
+    });
+  }
+  return v;
 }
+
+const introVideo = mountVideo(document.getElementById("intro-body"), INTRO, "aquí va el video de introducción");
+mountVideo(document.getElementById("reaction"), REACTION, "aquí va mi video");
+
+/* "sigue bajando": lleva a la pared de fotos; brilla mas cuando termina la introduccion */
+const cue = document.getElementById("cue");
+cue.addEventListener("click", () => {
+  document.getElementById("wall-top").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+if (introVideo) introVideo.addEventListener("ended", () => cue.classList.add("hot"));
 </script>
 </body>
 </html>
