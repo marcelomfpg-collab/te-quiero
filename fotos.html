@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#1b0f28">
+<meta name="theme-color" content="#1a1017">
 <title>Nuestros momentos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=Caveat:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --sun:#ff9a5a;
-    --coral:#ff6f8e;
     --gold:#f6c667;
+    --coral:#ff6f8e;
     --paper:#fff3e4;
     --ink:#3a2440;
     --ink-soft:#6c5470;
-    --line:rgba(255,214,170,.28);
+    --wood-edge:#82572e #5a3919 #4a2f15 #704a25;   /* marco de madera: luz arriba/izquierda */
   }
   *{ box-sizing:border-box; }
   body{
@@ -25,76 +24,141 @@
     color:var(--paper);
     font-family:"Work Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
+    /* cuarto en penumbra: las luces de la pared son lo que brilla */
     background:
-      radial-gradient(120% 50% at 50% 0%, rgba(255,154,90,.36), transparent 60%),
-      linear-gradient(180deg, #2c1a3b 0%, #1b0f28 55%, #120a1c 100%);
+      radial-gradient(90% 55% at 50% 24%, rgba(255,170,90,.20), transparent 65%),
+      linear-gradient(180deg, #2a1b22 0%, #1a1017 55%, #110a10 100%);
     background-attachment:fixed;
   }
-  h1,h2{ font-family:"Fraunces", Georgia, serif; margin:0; }
-  .wrap{ max-width:980px; margin:0 auto; padding-inline:20px; }
+  h1,h2{ margin:0; }
   .script{ font-family:"Caveat", cursive; }
 
-  /* ---------- encabezado ---------- */
-  .hero{ text-align:center; padding:60px 0 22px; }
-  .sun{
-    width:min(30vw,110px); aspect-ratio:1;
-    margin:0 auto 20px;
-    border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #ffe3ad, var(--sun) 45%, var(--coral) 100%);
-    box-shadow:0 0 50px 8px rgba(255,154,90,.45);
+  /* ---------- letrero de pizarra ---------- */
+  .signwrap{ position:relative; z-index:3; padding:34px 16px 0; }
+  .sign{
+    max-width:560px;
+    margin:0 auto;
+    padding:22px 18px 20px;
+    text-align:center;
+    background:
+      radial-gradient(90% 80% at 25% 15%, rgba(255,255,255,.07), transparent 60%),
+      radial-gradient(70% 60% at 85% 90%, rgba(255,255,255,.04), transparent 60%),
+      #222221;
+    border:12px solid;
+    border-color:var(--wood-edge);
+    border-radius:4px;
+    box-shadow:0 22px 40px -14px rgba(0,0,0,.85), inset 0 0 0 2px rgba(0,0,0,.4), inset 0 0 46px rgba(0,0,0,.55);
   }
-  .eyebrow{ font-size:1.6rem; color:var(--gold); margin:0 0 4px; }
-  .hero h1{
-    font-size:clamp(2rem, 7vw, 3.2rem);
-    font-weight:600;
-    line-height:1.1;
-    color:#fff6ea;
-    text-wrap:balance;
+  .chalk{
+    font-family:"Caveat", cursive;
+    color:#f4efe6;
+    text-shadow:0 0 1.5px rgba(255,255,255,.7), 0 0 14px rgba(255,255,255,.1);
   }
-  .hero .sub{ margin:12px 0 0; color:#f3d9c4; font-size:1.02rem; }
+  .sign .l1{ font-size:1.7rem; margin:0; }
+  .sign h1{
+    font-family:"Caveat", cursive;
+    font-size:clamp(2.5rem, 10vw, 3.9rem);
+    font-weight:700;
+    line-height:1;
+    margin:2px 0 6px;
+    letter-spacing:.01em;
+  }
+  .sign .l3{ font-size:1.5rem; margin:0; color:#eadfce; }
 
-  /* ---------- coleccion de fotos (polaroids) ---------- */
-  .grid{
+  /* ---------- la pared de tablas ---------- */
+  .wall{
+    position:relative;
+    width:calc(100% - 20px);
+    max-width:880px;
+    margin:-12px auto 0;
+    padding:46px 14px 30px;
+    border-radius:6px;
+    background:
+      linear-gradient(0deg, rgba(0,0,0,.36) 0 3px, transparent 3px) 0 0 / 100% 96px,                     /* juntas entre tablas */
+      linear-gradient(0deg, rgba(255,214,160,.08) 0 48px, rgba(0,0,0,.06) 48px 96px) 0 0 / 100% 192px,   /* cada tabla de otro tono */
+      repeating-linear-gradient(0deg, rgba(255,235,200,.035) 0 1px, transparent 1px 6px),                /* veta */
+      linear-gradient(90deg, #8d5d37, #a5733f 28%, #92623a 55%, #a97745 80%, #8d5d37);
+    box-shadow:
+      0 34px 70px -24px rgba(0,0,0,.85),
+      0 0 90px 10px rgba(255,170,80,.14),
+      inset 0 0 70px rgba(0,0,0,.5),
+      inset 0 0 0 6px #5b3a1d;
+  }
+
+  /* ---------- cuerda con luces ---------- */
+  .rope{
+    position:relative;
+    margin:0 -14px 26px;
+  }
+  .wire{
+    position:absolute; left:0; top:0;
+    width:100%;
+    overflow:visible;
+    pointer-events:none;
+  }
+  .bulb{
+    position:absolute;
+    z-index:3;
+    width:10px; height:14px;
+    margin-left:-5px;
+    border-radius:50% 50% 55% 55% / 40% 40% 60% 60%;
+    background:radial-gradient(circle at 45% 35%, #fffbe6 0 25%, #ffd978 55%, #f4a93a 100%);
+    box-shadow:0 0 6px 2px rgba(255,214,120,.95), 0 0 20px 7px rgba(255,170,70,.5);
+    animation:glow var(--d, 3s) ease-in-out infinite alternate;
+    pointer-events:none;
+  }
+  .bulb::before{                                /* casquillo */
+    content:"";
+    position:absolute; left:50%; top:-4px;
+    width:6px; height:5px; margin-left:-3px;
+    background:#1d2a1b;
+    border-radius:1px;
+  }
+  @keyframes glow{ from{ opacity:.74; } to{ opacity:1; } }
+
+  .cells{
+    position:relative;
+    z-index:2;
     display:grid;
-    grid-template-columns:repeat(2, minmax(0,1fr));
-    gap:36px 16px;
-    padding:30px 0 56px;
+    grid-template-columns:repeat(var(--k), minmax(0,1fr));
+    align-items:start;
+    padding:0 14px;
   }
-  .grid > :nth-child(even){ margin-top:26px; }
-  @media (min-width:720px){
-    .grid{ grid-template-columns:repeat(3, minmax(0,1fr)); gap:48px 32px; }
-    .grid > :nth-child(even){ margin-top:0; }
-    .grid > :nth-child(3n+2){ margin-top:30px; }
-  }
+  .cell{ display:flex; justify-content:center; }
 
+  /* ---------- fotos colgadas con ganchito ---------- */
   .frame{
     position:relative;
     margin:0;
+    width:86%;
+    max-width:178px;
     background:var(--paper);
-    padding:11px 11px 0;
-    border-radius:4px;
-    box-shadow:0 20px 34px -16px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.05);
+    padding:10px 10px 0;
+    border-radius:3px;
+    box-shadow:0 16px 26px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.06);
+    transform-origin:50% 0;
     transform:rotate(var(--r));
-    transition:transform .35s ease, box-shadow .35s ease;
-    animation:rise .8s cubic-bezier(.2,.7,.2,1) backwards;
-    animation-delay:calc(var(--i) * 80ms + 150ms);
+    animation:
+      sway calc(5s + var(--i) * .35s) ease-in-out infinite alternate,
+      rise .8s cubic-bezier(.2,.7,.2,1) backwards;
+    animation-delay:0s, calc(var(--i) * 80ms + 150ms);
   }
-  .frame:hover{
-    transform:translateY(-8px) rotate(0deg);
-    box-shadow:0 28px 40px -16px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.05);
+  @keyframes sway{
+    from{ transform:rotate(calc(var(--r) - 1.3deg)); }
+    to  { transform:rotate(calc(var(--r) + 1.3deg)); }
   }
   @keyframes rise{
-    from{ opacity:0; transform:translateY(28px) rotate(var(--r)); }
+    from{ opacity:0; transform:translateY(24px) rotate(var(--r)); }
   }
-  /* cinta adhesiva */
-  .frame::before{
+  .frame::before{                               /* ganchito de madera */
     content:"";
-    position:absolute; top:-13px; left:50%;
-    width:78px; height:26px;
-    background:rgba(246,198,103,.55);
-    transform:translateX(-50%) rotate(var(--tr));
-    box-shadow:0 2px 6px -2px rgba(0,0,0,.35);
-    backdrop-filter:blur(1px);
+    position:absolute; top:-15px; left:50%;
+    width:12px; height:28px;
+    margin-left:-6px;
+    background:linear-gradient(90deg, #d9aa6e 0 44%, #6e4a26 44% 56%, #d9aa6e 56%);
+    border-radius:3px;
+    box-shadow:0 2px 4px rgba(0,0,0,.45);
+    z-index:4;
   }
   .photo{
     aspect-ratio:4/5;
@@ -112,59 +176,72 @@
       linear-gradient(160deg, #f6e3cf, #ecc9b0);
   }
   .ph{
-    position:absolute; inset:9px;
+    position:absolute; inset:8px;
     border:1.5px dashed rgba(58,36,64,.3);
     border-radius:3px;
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
-    gap:6px;
+    gap:5px;
     text-align:center;
     color:var(--ink-soft);
   }
-  .ph-icon{ font-size:2rem; opacity:.55; }
-  .ph-text{ font-family:"Caveat", cursive; font-size:1.3rem; }
+  .ph-icon{ font-size:1.9rem; opacity:.55; }
+  .ph-text{ font-family:"Caveat", cursive; font-size:1.25rem; }
 
   figcaption{
-    display:flex; align-items:center; gap:10px;
-    padding:11px 4px 14px;
-    min-height:3.4em;
+    display:flex; align-items:center; gap:8px;
+    padding:10px 3px 13px;
+    min-height:3.3em;
     font-family:"Caveat", cursive;
-    font-size:1.25rem;
-    line-height:1.15;
+    font-size:1.2rem;
+    line-height:1.12;
     color:var(--ink);
   }
   .num{
     flex:none;
-    width:28px; height:28px;
+    width:26px; height:26px;
     border-radius:50%;
     border:1px solid rgba(58,36,64,.3);
     display:flex; align-items:center; justify-content:center;
     font-family:"Fraunces", serif;
-    font-size:.78rem;
+    font-size:.74rem;
     color:#b07a2a;
   }
   .soft{ color:var(--ink-soft); opacity:.75; }
 
   /* ---------- mi reaccion en video ---------- */
-  .reaction{ text-align:center; padding:6px 0 70px; }
-  .reaction h2{ font-size:clamp(1.6rem, 5.5vw, 2.2rem); color:#fff6ea; }
-  .reaction .eyebrow{ margin-bottom:2px; }
+  .reaction{ text-align:center; padding:6px 0 10px; }
+  .plate{
+    display:inline-block;
+    padding:6px 26px 10px;
+    margin:6px 0 20px;
+    background:#242423;
+    border:6px solid;
+    border-color:var(--wood-edge);
+    border-radius:5px;
+    box-shadow:0 12px 22px -10px rgba(0,0,0,.8), inset 0 0 22px rgba(0,0,0,.5);
+    position:relative;
+    z-index:4;
+  }
+  .plate .e{ font-size:1.25rem; color:#f2d9a0; margin:0; }
+  .plate h2{ font-family:"Caveat", cursive; font-size:2.2rem; font-weight:700; line-height:1.05; }
+
   .cinema{
     --ratio:1.7778;
-    margin:26px auto 0;
+    position:relative;
+    margin:0 auto;
     width:min(100%, 720px);
-    padding:12px;
-    border-radius:20px;
-    border:1px solid var(--line);
-    background:linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.02));
-    box-shadow:0 26px 50px -22px rgba(0,0,0,.8);
+    background:#0c0710;
+    border:10px solid;
+    border-color:var(--wood-edge);
+    border-radius:5px;
+    box-shadow:0 24px 44px -18px rgba(0,0,0,.85), inset 0 0 0 2px rgba(0,0,0,.45);
     animation:rise .9s cubic-bezier(.2,.7,.2,1) .2s backwards;
   }
   .screen{
     aspect-ratio:var(--ratio);
     width:min(100%, calc(78vh * var(--ratio)));
     margin:0 auto;
-    border-radius:13px;
     overflow:hidden;
     background:#07050b;
     position:relative;
@@ -174,17 +251,17 @@
     background:
       radial-gradient(70% 70% at 50% 40%, rgba(255,154,90,.22), transparent 70%),
       linear-gradient(160deg, #241532, #130b1d);
-    border:1.5px dashed rgba(255,214,170,.32);
   }
   .cinema.empty .screen-in{
-    position:absolute; inset:0;
+    position:absolute; inset:10px;
+    border:1.5px dashed rgba(255,214,170,.32);
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
     gap:14px;
     color:#f3d9c4;
   }
   .playdot{
-    width:78px; height:78px;
+    width:76px; height:76px;
     border-radius:50%;
     border:2px solid var(--gold);
     display:flex; align-items:center; justify-content:center;
@@ -193,42 +270,54 @@
     padding-left:6px;
     box-shadow:0 0 34px rgba(246,198,103,.28);
   }
-  .screen-in .ph-text{ font-size:1.45rem; }
+  .screen-in .ph-text{ font-size:1.45rem; color:#f3d9c4; }
   .cinema-cap{
     margin:14px 6px 4px;
     font-family:"Caveat", cursive;
-    font-size:1.4rem;
-    color:#f3d9c4;
+    font-size:1.45rem;
+    color:#fff3e4;
+    text-shadow:0 2px 10px rgba(0,0,0,.7);
   }
 
   /* ---------- pie ---------- */
-  footer{ text-align:center; padding:6px 0 54px; color:var(--ink-soft); font-size:.85rem; }
-  footer .script{ display:block; font-size:1.25rem; color:var(--gold); margin-bottom:6px; }
+  footer{ text-align:center; padding:44px 20px 54px; color:#8f7388; font-size:.85rem; }
+  footer .script{ display:block; font-size:1.3rem; color:var(--gold); margin-bottom:6px; }
   footer a{ color:#c9a98f; text-decoration:none; border-bottom:1px solid rgba(201,169,143,.4); }
   footer a:hover{ color:var(--gold); border-color:var(--gold); }
   footer .heart{ color:var(--coral); }
+  footer p{ margin:16px 0 0; }
+
+  /* ---------- celular ---------- */
+  @media (max-width:599px){
+    .wall{ padding-top:40px; }
+    figcaption{ font-size:1.05rem; padding:8px 2px 11px; min-height:3em; gap:6px; }
+    .num{ width:22px; height:22px; font-size:.68rem; }
+    .ph-text{ font-size:1.08rem; }
+    .ph-icon{ font-size:1.6rem; }
+    .plate h2{ font-size:1.9rem; }
+  }
 
   @media (prefers-reduced-motion: reduce){
-    .frame, .cinema{ animation:none; }
-    .frame{ transition:none; }
+    .frame, .cinema, .bulb{ animation:none; }
   }
 </style>
 </head>
 <body>
 
-<header class="hero wrap">
-  <div class="sun"></div>
-  <p class="eyebrow script">para ti, Cami</p>
-  <h1>Nuestros momentos</h1>
-  <p class="sub">diez recuerdos que quería que vieras</p>
+<header class="signwrap">
+  <div class="sign">
+    <p class="chalk l1" id="sign-1"></p>
+    <h1 class="chalk" id="sign-title"></h1>
+    <p class="chalk l3" id="sign-3"></p>
+  </div>
 </header>
 
-<main class="wrap">
-  <section class="grid" id="grid" aria-label="Fotos"></section>
+<main class="wall" id="wall">
+  <div id="rows"></div>
   <section class="reaction" id="reaction" aria-label="Mi reacción en video"></section>
 </main>
 
-<footer class="wrap">
+<footer>
   <span class="script">gracias por estar</span>
   hecho con <span class="heart">♡</span> para ti
   <p><a href="index.html">← volver a las canciones</a></p>
@@ -238,6 +327,7 @@
 /* =====================================================================
    ✏️  CÓMO LLENAR ESTA PÁGINA
    -----------------------------------------------------------------
+   SIGN    → los textos del letrero de pizarra de arriba.
    PHOTOS  → las 10 fotos. Cada una tiene:
                src     → ruta de la foto (ej. "media/fotos/01.jpg").
                          Déjalo vacío "" y se ve el hueco con su marco.
@@ -245,10 +335,16 @@
    REACTION → tu video:
                video   → ruta del video (ej. "media/fotos/reaccion.mp4")
                poster  → imagen de portada (opcional)
-               title / caption → los textos de la sección
+               title / eyebrow / caption → los textos de la sección
              El video se ajusta solo a horizontal o vertical.
    Mándame las fotos y el video y yo los pongo aquí.
    ===================================================================== */
+
+const SIGN = {
+  line1: "para ti, Cami",
+  title: "Nuestros momentos",
+  line3: "diez recuerdos que quería que vieras"
+};
 
 const PHOTOS = [
   { src: "", caption: "" },
@@ -264,24 +360,27 @@ const PHOTOS = [
 ];
 
 const REACTION = {
-  title: "Mi reacción",
   eyebrow: "y ahora, mírame a mí",
+  title: "Mi reacción",
   video: "",
   poster: "",
   caption: ""
 };
 
 /* ------------------------- render (no tocar) ------------------------- */
-const ROT  = [-2.4, 1.8, -1.2, 2.6, -2, 1.2, -2.8, 2.1, -1.5, 2.4];
-const TAPE = [-4, 3, -2, 5, -5, 2, -3, 4, -6, 3];
+document.getElementById("sign-1").textContent = SIGN.line1;
+document.getElementById("sign-title").textContent = SIGN.title;
+document.getElementById("sign-3").textContent = SIGN.line3;
 
-const grid = document.getElementById("grid");
-PHOTOS.forEach((p, i) => {
+const ROT = [-2.4, 1.8, -1.2, 2.6, -2, 1.2, -2.8, 2.1, -1.5, 2.4];
+const SAG = 34;                                   /* cuanto cuelga la cuerda en el centro (px) */
+const wireY = (t) => 3 + 4 * SAG * t * (1 - t);   /* altura de la cuerda en la posicion t (0-1) */
+
+function makeFrame(p, i){
   const n = String(i + 1).padStart(2, "0");
   const fig = document.createElement("figure");
   fig.className = "frame" + (p.src ? "" : " empty");
   fig.style.setProperty("--r", ROT[i % ROT.length] + "deg");
-  fig.style.setProperty("--tr", TAPE[i % TAPE.length] + "deg");
   fig.style.setProperty("--i", i);
   fig.innerHTML = `
     <div class="photo">
@@ -294,13 +393,65 @@ PHOTOS.forEach((p, i) => {
       ${p.caption ? `<span>${p.caption}</span>` : `<span class="soft">aquí va el recuerdo</span>`}
     </figcaption>
   `;
-  grid.appendChild(fig);
-});
+  return fig;
+}
 
+/* una cuerda con luces; si trae fotos, quedan colgadas de ella */
+function makeRope(slice, K, startIndex){
+  const row = document.createElement("div");
+  row.className = "rope";
+  row.style.setProperty("--k", K);
+  row.style.minHeight = (SAG + 12) + "px";
+
+  const bulbsN = K >= 5 ? 24 : 9;
+  let bulbs = "";
+  for (let b = 0; b < bulbsN; b++) {
+    const t = (b + 0.5) / bulbsN;
+    bulbs += `<i class="bulb" style="left:${(t * 100).toFixed(2)}%;top:${(wireY(t) + 2).toFixed(1)}px;--d:${(2.2 + ((b * 37) % 17) / 10).toFixed(1)}s;animation-delay:${(((b * 53) % 20) / 10).toFixed(1)}s"></i>`;
+  }
+  row.innerHTML = `
+    <svg class="wire" viewBox="0 0 100 ${SAG + 8}" preserveAspectRatio="none" style="height:${SAG + 8}px" aria-hidden="true">
+      <path d="M0,3 Q50,${3 + 2 * SAG} 100,3" fill="none" stroke="#1d2a1b" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
+    </svg>
+    ${bulbs}
+  `;
+
+  if (slice.length) {
+    const cells = document.createElement("div");
+    cells.className = "cells";
+    slice.forEach((p, j) => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.style.marginTop = wireY((j + 0.5) / K).toFixed(1) + "px";
+      cell.appendChild(makeFrame(p, startIndex + j));
+      cells.appendChild(cell);
+    });
+    row.appendChild(cells);
+  }
+  return row;
+}
+
+/* celular: 2 fotos por cuerda; pantalla grande: 5 por cuerda */
+const bigScreen = window.matchMedia("(min-width:900px)");
+function buildRows(){
+  const K = bigScreen.matches ? 5 : 2;
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+  for (let s = 0; s < PHOTOS.length; s += K) {
+    rows.appendChild(makeRope(PHOTOS.slice(s, s + K), K, s));
+  }
+}
+buildRows();
+if (bigScreen.addEventListener) bigScreen.addEventListener("change", buildRows);
+else bigScreen.addListener(buildRows);
+
+/* seccion del video: luces arriba, placa de pizarra y el marco de madera */
 const reaction = document.getElementById("reaction");
 reaction.innerHTML = `
-  <p class="eyebrow script">${REACTION.eyebrow}</p>
-  <h2>${REACTION.title}</h2>
+  <div class="plate">
+    <p class="chalk e">${REACTION.eyebrow}</p>
+    <h2 class="chalk">${REACTION.title}</h2>
+  </div>
   <div class="cinema${REACTION.video ? "" : " empty"}" id="cinema">
     <div class="screen">
       ${REACTION.video
@@ -312,9 +463,10 @@ reaction.innerHTML = `
              <span class="ph-text">aquí va mi video</span>
            </div>`}
     </div>
-    ${REACTION.caption ? `<p class="cinema-cap">${REACTION.caption}</p>` : ""}
   </div>
+  ${REACTION.caption ? `<p class="cinema-cap">${REACTION.caption}</p>` : ""}
 `;
+reaction.prepend(makeRope([], 1, 0));
 
 /* el marco del video se adapta a horizontal o vertical segun el archivo real */
 const rv = reaction.querySelector("video");
