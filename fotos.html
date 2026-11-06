@@ -1083,7 +1083,7 @@ const LY_HOLD = 8;                          /* segundos que una linea se queda e
    Si la letra sale tarde, sube este numero; si sale antes de tiempo, bájalo.
    Para probar sin editar: fotos.html?lyoffset=1.2#cancion */
 const _lo = parseFloat(new URLSearchParams(location.search).get("lyoffset"));
-const LY_OFFSET = isFinite(_lo) ? _lo : 0.8;
+let LY_OFFSET = isFinite(_lo) ? _lo : 1.6;
 const lyTime = (t) => {
   if (typeof t === "number") return t;
   const parts = String(t).trim().split(":").map(parseFloat);
@@ -1141,6 +1141,20 @@ function lyUpdate(){
 }
 audio.addEventListener("timeupdate", lyUpdate);
 audio.addEventListener("seeked", lyUpdate);
+/* ?ajustar=1 → botones − / + en el recuadro de la letra para adelantarla o atrasarla mientras suena */
+if (new URLSearchParams(location.search).get("ajustar") === "1") {
+  const head = document.querySelector("#lyrics .ly-head");
+  const wrap = document.createElement("span");
+  wrap.style.cssText = "display:flex;align-items:center;gap:6px;letter-spacing:0;text-transform:none";
+  wrap.innerHTML = `<button type="button" id="lo-minus">−</button><b id="lo-val" style="min-width:5.2em;text-align:center;color:#f6c667"></b><button type="button" id="lo-plus">+</button>`;
+  head.appendChild(wrap);
+  wrap.querySelectorAll("button").forEach(b => { b.style.cssText = "font:inherit;font-size:1rem;width:30px;height:28px;border-radius:8px;border:1px solid rgba(246,198,103,.5);background:rgba(255,255,255,.08);color:#fff3e4;cursor:pointer"; });
+  const paintLo = () => { document.getElementById("lo-val").textContent = "adelanto " + LY_OFFSET.toFixed(1) + " s"; };
+  const bump = (d) => { LY_OFFSET = Math.max(0, Math.round((LY_OFFSET + d) * 10) / 10); lyIdx = -2; lyStale = false; lyUpdate(); paintLo(); };
+  document.getElementById("lo-minus").addEventListener("click", () => bump(-0.2));
+  document.getElementById("lo-plus").addEventListener("click", () => bump(0.2));
+  paintLo();
+}
 /* mientras suena, se revisa en cada cuadro de pantalla (timeupdate solo avisa ~4 veces por segundo) */
 let lyRaf = 0;
 const lyLoop = () => { lyUpdate(); lyRaf = audio.paused ? 0 : requestAnimationFrame(lyLoop); };
