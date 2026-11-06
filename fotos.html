@@ -1167,8 +1167,9 @@ const letraReady = fetch(LETRA_URL, { cache: "no-cache" })
 /* ---------- modo sincronizar: ?tapsync=1 ----------
    Reproduce la cancion y toca "Ahora" (o Espacio) justo cuando entra cada linea.
    Al final descarga letra.txt ya con los tiempos; reemplaza el de media/fotos/. */
-if (new URLSearchParams(location.search).get("tapsync") === "1") {
-  const REACT = 0.25;                        /* segundos que se restan por el tiempo de reaccion */
+const TAPSYNC = new URLSearchParams(location.search).get("tapsync") === "1";
+if (TAPSYNC) {
+  const REACT = 0.25;                       /* segundos que se restan por el tiempo de reaccion */
   const box = document.createElement("div");
   box.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:60;padding:14px 16px 18px;background:#1b1118;border-top:2px solid #f6c667;color:#fff3e4;font-family:'Work Sans',sans-serif;text-align:center;box-shadow:0 -12px 30px rgba(0,0,0,.6)";
   box.innerHTML = `
@@ -1217,6 +1218,10 @@ if (new URLSearchParams(location.search).get("tapsync") === "1") {
   q("ts-skip").addEventListener("click", () => { if (pos < letraBlocks.length) { letraBlocks[pos].t = null; pos++; paintSync(); } });
   q("ts-undo").addEventListener("click", () => { if (pos > 0) { pos--; letraBlocks[pos].t = null; paintSync(); } });
   q("ts-play").addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+  const playLabel = () => { q("ts-play").textContent = audio.paused ? "▶ canción" : "❚❚ pausar"; };
+  audio.addEventListener("play", playLabel);
+  audio.addEventListener("pause", playLabel);
+  playLabel();
   q("ts-dl").addEventListener("click", () => {
     const out = letraBlocks.map(b => (b.t !== null ? `[${b.t}] ` : "") + b.es + (b.en ? "\n" + b.en : "")).join("\n\n") + "\n";
     const a = document.createElement("a");
@@ -1257,7 +1262,7 @@ function showView(name){
   /* la cancion intenta sonar sola al entrar a su seccion (si el navegador no la deja, queda el disco);
      si ella la pausa a mano no vuelve a empezar sola; si salio y sonaba sola, se pausa */
   if (name === "cancion") {
-    if (!userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
+    if (!TAPSYNC && !userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
   } else if (autoStarted && !audio.paused) {
     audio.pause();
     autoStarted = false;
