@@ -735,10 +735,9 @@ const PHRASE = {
   sign: "— Marcelo"
 };
 /* LETRA TRADUCIDA que aparece al lado del reproductor, línea por línea.
-   Cada línea: { t: "minuto:segundo en que entra", es: "la traducción" }
-   Ej.:  { t: "0:18", es: "tu traducción aquí" },
-   Para saber en qué segundo entra cada línea, abre fotos.html?sync=1#cancion
-   y mira el reloj (⏱) del recuadro mientras suena. Déjalo vacío y se muestra un aviso. */
+   Lo normal es NO tocar esto: la letra se carga sola desde el archivo media/fotos/letra.txt
+   (ver más abajo cómo se arma y cómo se sincroniza con ?tapsync=1).
+   Si prefieres, también puedes escribir líneas sueltas aquí: { t: "0:18", es: "tu traducción" } */
 const LYRICS = [
   /* { t: "0:00", es: "" }, */
 ];
@@ -1137,6 +1136,90 @@ if (new URLSearchParams(location.search).get("sync") === "1") {
   tick();
 }
 lyricsInit();
+
+/* ---------- la letra vive en un archivo aparte: media/fotos/letra.txt ----------
+   Formato: bloques separados por una linea en blanco. En cada bloque, la 1.ª linea es la traduccion
+   (la que se muestra) y la 2.ª (opcional) el original. La traduccion puede empezar con su tiempo:
+       [0:18] Me haces sentir vivo otra vez
+   Las lineas sin tiempo no se muestran. El modo sincronizar (?tapsync=1) agrega los tiempos solo. */
+const LETRA_URL = "media/fotos/letra.txt";
+function parseLetra(txt){
+  return txt.replace(/\r/g, "").split(/\n\s*\n/)
+    .map(b => b.split("\n").map(s => s.trim()).filter(Boolean))
+    .filter(b => b.length)
+    .map(b => {
+      let es = b[0], t = null;
+      const m = es.match(/^\[(\d+:\d+(?:\.\d+)?)\]\s*(.*)$/);
+      if (m) { t = m[1]; es = m[2]; }
+      return { t, es, en: b[1] || "" };
+    });
+}
+let letraBlocks = [];
+const letraReady = fetch(LETRA_URL, { cache: "no-cache" })
+  .then(r => r.ok ? r.text() : "")
+  .then(txt => {
+    letraBlocks = parseLetra(txt);
+    letraBlocks.filter(b => b.t !== null && b.es).forEach(b => LYRICS.push({ t: b.t, es: b.es }));
+    lyricsInit();
+  })
+  .catch(() => {});
+
+/* ---------- modo sincronizar: ?tapsync=1 ----------
+   Reproduce la cancion y toca "Ahora" (o Espacio) justo cuando entra cada linea.
+   Al final descarga letra.txt ya con los tiempos; reemplaza el de media/fotos/. */
+if (new URLSearchParams(location.search).get("tapsync") === "1") {
+  const REACT = 0.25;                        /* segundos que se restan por el tiempo de reaccion */
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:60;padding:14px 16px 18px;background:#1b1118;border-top:2px solid #f6c667;color:#fff3e4;font-family:'Work Sans',sans-serif;text-align:center;box-shadow:0 -12px 30px rgba(0,0,0,.6)";
+  box.innerHTML = `
+    <div id="ts-info" style="font-size:.78rem;color:#c9a98f;margin-bottom:6px"></div>
+    <div id="ts-es" style="font-family:'Caveat',cursive;font-size:1.9rem;line-height:1.1;min-height:2.2em"></div>
+    <div id="ts-en" style="font-size:.85rem;color:#a98f9c;min-height:1.3em;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button id="ts-play" type="button">▶ canción</button>
+      <button id="ts-now" type="button" style="background:#f6c667;color:#2a1b22;font-weight:700;padding:12px 30px">Ahora (Espacio)</button>
+      <button id="ts-skip" type="button">Saltar</button>
+      <button id="ts-undo" type="button">↶ Deshacer</button>
+      <button id="ts-dl" type="button">⬇ letra.txt</button>
+    </div>`;
+  document.body.appendChild(box);
+  box.querySelectorAll("button").forEach(b => {
+    b.style.cssText += ";font:inherit;font-size:.95rem;padding:10px 16px;border-radius:10px;border:1px solid rgba(246,198,103,.5);background:rgba(255,255,255,.07);color:#fff3e4;cursor:pointer";
+  });
+  const q = (id) => box.querySelector("#" + id);
+  let pos = 0;
+  const fmtT = (s) => Math.floor(s / 60) + ":" + (s % 60).toFixed(2).padStart(5, "0");
+  const paintSync = () => {
+    const n = letraBlocks.length;
+    q("ts-info").textContent = n
+      ? (pos < n ? `línea ${pos + 1} de ${n}  ·  ${fmtT(audio.currentTime)}` : "listo: descarga el archivo y reemplaza media/fotos/letra.txt")
+      : "no encuentro media/fotos/letra.txt (pega ahí la letra traducida)";
+    q("ts-es").textContent = pos < n ? letraBlocks[pos].es : (n ? "✓" : "");
+    q("ts-en").textContent = pos < n ? letraBlocks[pos].en : "";
+  };
+  const stamp = () => {
+    if (pos >= letraBlocks.length) return;
+    letraBlocks[pos].t = fmtT(Math.max(0, audio.currentTime - REACT));
+    pos++; paintSync();
+  };
+  q("ts-now").addEventListener("click", stamp);
+  q("ts-skip").addEventListener("click", () => { if (pos < letraBlocks.length) { letraBlocks[pos].t = null; pos++; paintSync(); } });
+  q("ts-undo").addEventListener("click", () => { if (pos > 0) { pos--; letraBlocks[pos].t = null; paintSync(); } });
+  q("ts-play").addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+  q("ts-dl").addEventListener("click", () => {
+    const out = letraBlocks.map(b => (b.t !== null ? `[${b.t}] ` : "") + b.es + (b.en ? "\n" + b.en : "")).join("\n\n") + "\n";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out], { type: "text/plain;charset=utf-8" }));
+    a.download = "letra.txt";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && !(e.target && /^(BUTTON|INPUT|TEXTAREA)$/.test(e.target.tagName))) { e.preventDefault(); stamp(); }
+  });
+  audio.addEventListener("timeupdate", paintSync);
+  letraReady.then(paintSync);
+  if (!location.hash) location.hash = "#cancion";
+}
 
 /* ---------- pestanas: una seccion a la vez ---------- */
 const VIEWS = ["intro", "fotos", "cancion"];
