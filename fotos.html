@@ -1220,6 +1220,8 @@ if (TAPSYNC) {
       <button id="ts-now" type="button" style="background:#f6c667;color:#2a1b22;font-weight:700;padding:12px 30px">Ahora (Espacio)</button>
       <button id="ts-skip" type="button">Saltar</button>
       <button id="ts-undo" type="button">↶ Deshacer</button>
+      <button id="ts-rate" type="button">velocidad 0.75×</button>
+      <button id="ts-restart" type="button">⏮ de nuevo</button>
       <button id="ts-dl" type="button">⬇ letra.txt</button>
     </div>`;
   document.body.appendChild(box);
@@ -1253,6 +1255,24 @@ if (TAPSYNC) {
   q("ts-skip").addEventListener("click", () => { if (pos < letraBlocks.length) { letraBlocks[pos].t = null; pos++; paintSync(); } });
   q("ts-undo").addEventListener("click", () => { if (pos > 0) { pos--; letraBlocks[pos].t = null; paintSync(); } });
   q("ts-play").addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+  /* a menor velocidad es mas facil tocar justo a tiempo; el tiempo que se guarda es el de la cancion, no el del reloj */
+  const RATES = [0.75, 0.5, 1];
+  let ri = 0;
+  audio.playbackRate = RATES[0];
+  q("ts-rate").addEventListener("click", () => {
+    ri = (ri + 1) % RATES.length;
+    audio.playbackRate = RATES[ri];
+    q("ts-rate").textContent = "velocidad " + RATES[ri] + "×";
+  });
+  q("ts-restart").addEventListener("click", () => {
+    if (!confirm("¿Borrar todos los tiempos y empezar de nuevo?")) return;
+    letraBlocks.forEach(b => { b.t = null; });
+    pos = 0;
+    audio.currentTime = 0;
+    audio.playbackRate = RATES[ri];
+    audio.play().catch(() => {});
+    paintSync();
+  });
   const playLabel = () => { q("ts-play").textContent = audio.paused ? "▶ canción" : "❚❚ pausar"; };
   audio.addEventListener("play", playLabel);
   audio.addEventListener("pause", playLabel);
