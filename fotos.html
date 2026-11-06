@@ -413,6 +413,82 @@
   .lb-nav.next{ right:14px; }
   .lb-close:hover, .lb-nav:hover{ background:rgba(255,255,255,.2); }
 
+  /* ---------- seccion de la frase + cancion ---------- */
+  .song{
+    max-width:880px;
+    margin:54px auto 0;
+    padding:0 14px;
+    text-align:center;
+  }
+  .song .rope{ margin:0 0 12px; }
+  .song .wire path{ stroke:#3c4d39; }
+  .phrase-board{ max-width:620px; padding:28px 24px 24px; margin-top:22px; }
+  .phrase-board .e{ font-size:1.35rem; color:#f2d9a0; margin:0 0 10px; }
+  .phrase-board .q{
+    font-family:"Caveat", cursive;
+    font-size:clamp(1.9rem, 6.4vw, 2.9rem);
+    line-height:1.15;
+    margin:0;
+    white-space:pre-line;
+  }
+  .phrase-board .q.dim{ opacity:.5; }
+  .phrase-board .sig{ font-size:1.5rem; color:#f2d9a0; text-align:right; margin:14px 0 0; }
+
+  .player{
+    display:flex; align-items:center; gap:18px;
+    width:min(100%, 520px);
+    margin:30px auto 0;
+    padding:16px 20px 16px 16px;
+    background:rgba(18,10,18,.55);
+    border:1px solid rgba(246,198,103,.22);
+    border-radius:60px 18px 18px 60px;
+    box-shadow:0 18px 40px -20px rgba(0,0,0,.8), 0 0 40px -10px rgba(246,198,103,.12);
+    text-align:left;
+  }
+  .vinyl{
+    flex:none;
+    position:relative;
+    width:84px; height:84px;
+    border-radius:50%;
+    border:0; padding:0;
+    cursor:pointer;
+    background:
+      radial-gradient(circle, #f6c667 0 11%, #c9344f 11% 30%, transparent 30%),
+      repeating-radial-gradient(circle, #151015 0 2px, #231a24 2px 4px),
+      #151015;
+    box-shadow:0 8px 20px -6px rgba(0,0,0,.8), 0 0 0 3px rgba(255,255,255,.05);
+    animation:spin 5s linear infinite paused;
+  }
+  .vinyl::after{                                /* brillo del disco */
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 20deg, transparent 0 20%, rgba(255,255,255,.12) 25%, transparent 32% 70%, rgba(255,255,255,.1) 75%, transparent 82%);
+  }
+  .player.on .vinyl{ animation-play-state:running; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .vinyl .ic{
+    position:absolute; left:50%; top:50%; z-index:2;
+    width:26px; height:26px; margin:-13px 0 0 -13px;
+    border-radius:50%;
+    background:rgba(20,10,20,.78);
+    color:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.8rem; line-height:1;
+    animation:spin 5s linear infinite reverse paused;   /* el icono no gira con el disco */
+  }
+  .player.on .vinyl .ic{ animation-play-state:running; }
+  .vinyl:focus-visible{ outline:3px solid var(--gold); outline-offset:4px; }
+  .pinfo{ flex:1; min-width:0; }
+  .pinfo .t{ font-family:"Fraunces", serif; font-size:1.05rem; margin:0; color:var(--paper); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pinfo .a{ font-size:.82rem; margin:2px 0 10px; color:#c9a98f; }
+  .bar{
+    position:relative; height:6px; border-radius:6px;
+    background:rgba(255,255,255,.14);
+    cursor:pointer;
+  }
+  .bar i{ position:absolute; left:0; top:0; bottom:0; width:0; border-radius:6px; background:linear-gradient(90deg, var(--coral), var(--gold)); }
+  .bar::before{ content:""; position:absolute; inset:-9px 0; }   /* area de toque mas grande */
+  .times{ display:flex; justify-content:space-between; margin-top:6px; font-size:.72rem; color:#a98f9c; font-variant-numeric:tabular-nums; }
+
   /* ---------- pie ---------- */
   footer{ text-align:center; padding:44px 20px 54px; color:#8f7388; font-size:.85rem; }
   footer .script{ display:block; font-size:1.3rem; color:var(--gold); margin-bottom:6px; }
@@ -457,7 +533,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .frame, .cinema, .bulb, .cue, .intro .cinema{ animation:none; }
+    .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic{ animation:none; }
     .lb-notewrap{ transition:none; }
   }
 </style>
@@ -482,6 +558,25 @@
 <main class="wall" id="wall">
   <div id="rows"></div>
 </main>
+
+<!-- 3) la frase y la cancion -->
+<section class="song" id="song" aria-label="Una frase y una canción">
+  <div class="sign phrase-board">
+    <p class="chalk e" id="phrase-eyebrow"></p>
+    <p class="chalk q" id="phrase-text"></p>
+    <p class="chalk sig" id="phrase-sig"></p>
+  </div>
+  <div class="player" id="player">
+    <button class="vinyl" id="vinyl" type="button" aria-label="Reproducir canción"><span class="ic" id="vinyl-ic">▶</span></button>
+    <div class="pinfo">
+      <p class="t" id="song-title"></p>
+      <p class="a" id="song-artist"></p>
+      <div class="bar" id="bar" role="slider" aria-label="Avance de la canción" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar-fill"></i></div>
+      <div class="times"><span id="t-cur">0:00</span><span id="t-dur">0:00</span></div>
+    </div>
+  </div>
+  <audio id="song-audio" preload="metadata" loop></audio>
+</section>
 
 <footer>
   <span class="script">gracias por estar</span>
@@ -529,6 +624,18 @@ const INTRO = {
   video: "media/fotos/intro.mp4",
   poster: "",
   caption: ""
+};
+
+/* la frase y la cancion que suena en esa seccion */
+const PHRASE = {
+  eyebrow: "para ti",
+  text: "",                      /* ← escribe aquí tu frase (con Enter haces salto de línea) */
+  sign: "— Marcelo"
+};
+const SONG = {
+  src: "media/fotos/beautiful.mp3",
+  title: "Beautiful",
+  artist: "Anyma, Joji"
 };
 
 const SIGN = {
@@ -805,6 +912,75 @@ function mountVideo(el, cfg, emptyLabel){
 }
 
 const introVideo = mountVideo(document.getElementById("intro-body"), INTRO, "aquí va el video de introducción");
+
+/* ---------- frase + cancion ---------- */
+document.getElementById("phrase-eyebrow").textContent = PHRASE.eyebrow;
+const phraseEl = document.getElementById("phrase-text");
+phraseEl.textContent = PHRASE.text || "aquí va tu frase";
+phraseEl.classList.toggle("dim", !PHRASE.text);
+document.getElementById("phrase-sig").textContent = PHRASE.sign;
+document.getElementById("song-title").textContent = SONG.title;
+document.getElementById("song-artist").textContent = SONG.artist;
+document.getElementById("song").prepend(makeRope([], 1, 0));
+
+const audio = document.getElementById("song-audio");
+const player = document.getElementById("player");
+const vinyl = document.getElementById("vinyl");
+const vinylIc = document.getElementById("vinyl-ic");
+const bar = document.getElementById("bar");
+const barFill = document.getElementById("bar-fill");
+audio.src = SONG.src;
+const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+let userPaused = false, autoStarted = false;
+
+function paintAudio(){
+  const d = audio.duration || 0;
+  const p = d ? audio.currentTime / d : 0;
+  barFill.style.width = (p * 100).toFixed(2) + "%";
+  bar.setAttribute("aria-valuenow", Math.round(p * 100));
+  document.getElementById("t-cur").textContent = fmt(audio.currentTime);
+  document.getElementById("t-dur").textContent = fmt(d);
+}
+audio.addEventListener("timeupdate", paintAudio);
+audio.addEventListener("loadedmetadata", paintAudio);
+audio.addEventListener("play", () => { player.classList.add("on"); vinylIc.textContent = "❚❚"; vinyl.setAttribute("aria-label", "Pausar canción"); });
+audio.addEventListener("pause", () => { player.classList.remove("on"); vinylIc.textContent = "▶"; vinyl.setAttribute("aria-label", "Reproducir canción"); });
+
+vinyl.addEventListener("click", () => {
+  if (audio.paused) { userPaused = false; autoStarted = false; audio.play().catch(() => {}); }
+  else { userPaused = true; audio.pause(); }
+});
+function seekTo(clientX){
+  const r = bar.getBoundingClientRect();
+  if (audio.duration) audio.currentTime = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * audio.duration;
+}
+bar.addEventListener("click", (e) => seekTo(e.clientX));
+bar.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 5);
+  else if (e.key === "ArrowLeft") audio.currentTime = Math.max(0, audio.currentTime - 5);
+});
+
+/* solo suena una cosa a la vez: si empieza un video o la cancion, lo demas se pausa */
+document.addEventListener("play", (e) => {
+  document.querySelectorAll("video, audio").forEach(m => { if (m !== e.target && !m.paused) m.pause(); });
+}, true);
+
+/* al llegar a la seccion intenta sonar sola; si el navegador no la deja, queda el boton del disco.
+   Si ella la pausa a mano, no se vuelve a poner sola. Al salir de la seccion se pausa. */
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        if (!userPaused && audio.paused && !lb.classList.contains("show")) {
+          audio.play().then(() => { autoStarted = true; }).catch(() => {});
+        }
+      } else if (autoStarted && !audio.paused) {
+        audio.pause();
+        autoStarted = false;
+      }
+    });
+  }, { threshold: 0.55 }).observe(document.getElementById("player"));
+}
 
 /* "sigue bajando": lleva a la pared de fotos; brilla mas cuando termina la introduccion */
 const cue = document.getElementById("cue");
