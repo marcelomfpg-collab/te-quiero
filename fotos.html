@@ -1079,6 +1079,11 @@ document.addEventListener("play", (e) => {
 const lyStage = document.getElementById("ly-stage");
 let lyLines = [], lyIdx = -2, lyStale = false;
 const LY_HOLD = 8;                          /* segundos que una linea se queda en pantalla si no entra otra */
+/* LY_OFFSET: cuantos segundos ANTES aparece cada linea respecto a su tiempo (compensa el retraso al marcar).
+   Si la letra sale tarde, sube este numero; si sale antes de tiempo, bájalo.
+   Para probar sin editar: fotos.html?lyoffset=1.2#cancion */
+const _lo = parseFloat(new URLSearchParams(location.search).get("lyoffset"));
+const LY_OFFSET = isFinite(_lo) ? _lo : 0.8;
 const lyTime = (t) => {
   if (typeof t === "number") return t;
   const parts = String(t).trim().split(":").map(parseFloat);
@@ -1105,7 +1110,7 @@ function lyUpdate(){
     }
     return;
   }
-  const now = audio.currentTime;
+  const now = audio.currentTime + LY_OFFSET;
   let idx = -1;
   for (let i = 0; i < lyLines.length; i++) { if (lyLines[i].t <= now) idx = i; else break; }
   /* si pasan muchos segundos sin linea nueva (parte instrumental), la letra se desvanece sola */
@@ -1136,6 +1141,10 @@ function lyUpdate(){
 }
 audio.addEventListener("timeupdate", lyUpdate);
 audio.addEventListener("seeked", lyUpdate);
+/* mientras suena, se revisa en cada cuadro de pantalla (timeupdate solo avisa ~4 veces por segundo) */
+let lyRaf = 0;
+const lyLoop = () => { lyUpdate(); lyRaf = audio.paused ? 0 : requestAnimationFrame(lyLoop); };
+audio.addEventListener("play", () => { if (!lyRaf) lyRaf = requestAnimationFrame(lyLoop); });
 
 /* ?sync=1 → muestra el tiempo exacto de la cancion para anotar en que segundo entra cada linea */
 if (new URLSearchParams(location.search).get("sync") === "1") {
