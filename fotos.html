@@ -38,10 +38,47 @@
     text-shadow:0 0 1.5px rgba(255,255,255,.7), 0 0 14px rgba(255,255,255,.1);
   }
 
+  /* ---------- barra de pestanas: cada una abre una seccion distinta ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:14px;
+    height:58px;
+    padding:0 18px;
+    background:linear-gradient(180deg, rgba(38,22,31,.97), rgba(27,16,24,.96));
+    border-bottom:1px solid rgba(246,198,103,.28);
+    box-shadow:0 10px 26px -14px rgba(0,0,0,.85);
+  }
+  .brand{ font-family:"Caveat", cursive; font-size:1.65rem; color:var(--gold); white-space:nowrap; text-decoration:none; padding-right:6px; }
+  .tabs{ display:flex; flex:1; min-width:0; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    position:relative; flex:none;
+    height:58px; padding:0 16px;
+    display:flex; align-items:center;
+    color:#d6bfb4; font-size:.95rem; text-decoration:none; white-space:nowrap;
+    transition:color .25s ease;
+  }
+  .tab::after{
+    content:""; position:absolute; left:12px; right:12px; bottom:0;
+    height:3px; border-radius:3px 3px 0 0;
+    background:var(--gold);
+    transform:scaleX(0);
+    transition:transform .3s ease;
+  }
+  .tab:hover{ color:#fff; }
+  .tab[aria-current="page"]{ color:#fff6ea; font-weight:600; }
+  .tab[aria-current="page"]::after{ transform:scaleX(1); }
+  .tab.back{ margin-left:auto; color:#b99aa8; }
+  .tab.back .sh{ display:none; }
+
+  .view{ display:none; }
+  .view.active{ display:block; animation:viewIn .5s ease; }
+  @keyframes viewIn{ from{ opacity:0; transform:translateY(10px); } }
+
   /* ---------- seccion de introduccion (antes de la pared) ---------- */
   .intro{
-    min-height:100vh;
-    min-height:100svh;
+    min-height:calc(100vh - 58px);
+    min-height:calc(100svh - 58px);
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
     padding:26px 14px 18px;
@@ -415,12 +452,45 @@
 
   /* ---------- seccion de la frase + cancion ---------- */
   .song{
-    max-width:880px;
-    margin:54px auto 0;
+    max-width:980px;
+    margin:34px auto 0;
     padding:0 14px;
     text-align:center;
   }
-  .song .rope{ margin:0 0 12px; }
+  .song .rope{ margin:0 auto 12px; max-width:880px; }
+  .song-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:22px;
+    align-items:center;
+    margin-top:30px;
+  }
+  .song-row .player{ margin:0; width:auto; }
+
+  /* letra traducida: cada linea aparece sola, al ritmo de la cancion */
+  .lyrics{
+    min-height:168px;
+    padding:14px 22px 18px;
+    display:flex; flex-direction:column;
+    text-align:left;
+    background:rgba(18,10,18,.55);
+    border:1px solid rgba(246,198,103,.22);
+    border-radius:18px;
+    box-shadow:0 18px 40px -20px rgba(0,0,0,.8), 0 0 40px -10px rgba(246,198,103,.12);
+    overflow:hidden;
+  }
+  .ly-head{ display:flex; justify-content:space-between; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:#c9a98f; }
+  .ly-sync{ font-variant-numeric:tabular-nums; color:var(--gold); }
+  .ly-stage{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:10px; padding-top:10px; min-height:110px; }
+  .ly-line{ font-family:"Caveat", cursive; font-size:2rem; line-height:1.08; color:#fff3e4; transition:opacity .6s ease, font-size .6s ease, color .6s ease; }
+  .ly-line.now{ text-shadow:0 0 20px rgba(246,198,103,.38); animation:lyIn .85s cubic-bezier(.2,.8,.2,1) both; }
+  .ly-line.prev{ font-size:1.35rem; opacity:.36; color:#e8d3c4; }
+  .ly-line.out{ opacity:0; }
+  .ly-line.hint{ font-size:1.35rem; opacity:.45; }
+  @keyframes lyIn{
+    from{ opacity:0; transform:translateY(18px) scale(.97); filter:blur(8px); letter-spacing:.07em; }
+    to  { opacity:1; transform:none; filter:none; letter-spacing:0; }
+  }
   .song .wire path{ stroke:#3c4d39; }
   .phrase-board{ max-width:620px; padding:28px 24px 24px; margin-top:22px; }
   .phrase-board .e{ font-size:1.35rem; color:#f2d9a0; margin:0 0 10px; }
@@ -516,7 +586,16 @@
     .lb-nav.prev{ left:18px; }
     .lb-nav.next{ right:18px; }
   }
+  @media (max-width:759px){
+    .song-row{ grid-template-columns:1fr; }
+  }
   @media (max-width:599px){
+    .topnav{ padding:0 8px; gap:6px; }
+    .brand{ display:none; }
+    .tab{ padding:0 12px; font-size:.9rem; }
+    .tab.back .lg{ display:none; }
+    .tab.back .sh{ display:inline; font-size:1.2rem; }
+    .ly-line{ font-size:1.75rem; }
     .wall{ padding-top:40px; }
     figcaption{ font-size:1.05rem; padding:8px 2px 11px; min-height:3em; gap:6px; }
     .num{ width:22px; height:22px; font-size:.68rem; }
@@ -533,50 +612,73 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic{ animation:none; }
+    .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic, .view.active, .ly-line.now{ animation:none; }
     .lb-notewrap{ transition:none; }
   }
 </style>
 </head>
 <body>
 
-<!-- 1) introduccion: el video que se despliega antes de ver las fotos -->
-<section class="intro" id="intro" aria-label="Introducción">
-  <div class="reaction" id="intro-body"></div>
-  <button class="cue" id="cue" type="button">sigue bajando ↓</button>
-</section>
+<!-- barra de pestanas: cada una abre una seccion distinta -->
+<nav class="topnav" aria-label="Secciones">
+  <a class="brand" href="#intro">para ti, Cami ♡</a>
+  <div class="tabs">
+    <a class="tab" href="#intro" data-view="intro">Introducción</a>
+    <a class="tab" href="#fotos" data-view="fotos">Momentos</a>
+    <a class="tab" href="#cancion" data-view="cancion">Canción</a>
+    <a class="tab back" href="index.html"><span class="lg">← canciones</span><span class="sh" aria-label="Volver a las canciones">←</span></a>
+  </div>
+</nav>
+
+<!-- 1) introduccion: el video -->
+<div class="view" id="v-intro">
+  <section class="intro" id="intro" aria-label="Introducción">
+    <div class="reaction" id="intro-body"></div>
+    <a class="cue" id="cue" href="#fotos" style="text-decoration:none;display:inline-block">ver nuestros momentos →</a>
+  </section>
+</div>
 
 <!-- 2) la pared de fotos -->
-<header class="signwrap" id="wall-top">
-  <div class="sign">
-    <p class="chalk l1" id="sign-1"></p>
-    <h1 class="chalk" id="sign-title"></h1>
-    <p class="chalk l3" id="sign-3"></p>
-  </div>
-</header>
+<div class="view" id="v-fotos">
+  <header class="signwrap" id="wall-top">
+    <div class="sign">
+      <p class="chalk l1" id="sign-1"></p>
+      <h1 class="chalk" id="sign-title"></h1>
+      <p class="chalk l3" id="sign-3"></p>
+    </div>
+  </header>
 
-<main class="wall" id="wall">
-  <div id="rows"></div>
-</main>
+  <main class="wall" id="wall">
+    <div id="rows"></div>
+  </main>
+</div>
 
-<!-- 3) la frase y la cancion -->
+<!-- 3) la frase y la cancion con su letra traducida -->
+<div class="view" id="v-cancion">
 <section class="song" id="song" aria-label="Una frase y una canción">
   <div class="sign phrase-board">
     <p class="chalk e" id="phrase-eyebrow"></p>
     <p class="chalk q" id="phrase-text"></p>
     <p class="chalk sig" id="phrase-sig"></p>
   </div>
-  <div class="player" id="player">
-    <button class="vinyl" id="vinyl" type="button" aria-label="Reproducir canción"><span class="ic" id="vinyl-ic">▶</span></button>
-    <div class="pinfo">
-      <p class="t" id="song-title"></p>
-      <p class="a" id="song-artist"></p>
-      <div class="bar" id="bar" role="slider" aria-label="Avance de la canción" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar-fill"></i></div>
-      <div class="times"><span id="t-cur">0:00</span><span id="t-dur">0:00</span></div>
+  <div class="song-row">
+    <div class="player" id="player">
+      <button class="vinyl" id="vinyl" type="button" aria-label="Reproducir canción"><span class="ic" id="vinyl-ic">▶</span></button>
+      <div class="pinfo">
+        <p class="t" id="song-title"></p>
+        <p class="a" id="song-artist"></p>
+        <div class="bar" id="bar" role="slider" aria-label="Avance de la canción" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar-fill"></i></div>
+        <div class="times"><span id="t-cur">0:00</span><span id="t-dur">0:00</span></div>
+      </div>
+    </div>
+    <div class="lyrics" id="lyrics" aria-live="polite">
+      <div class="ly-head"><span>♪ letra traducida</span><span class="ly-sync" id="ly-sync"></span></div>
+      <div class="ly-stage" id="ly-stage"></div>
     </div>
   </div>
   <audio id="song-audio" preload="metadata" loop></audio>
 </section>
+</div>
 
 <footer>
   <span class="script">gracias por estar</span>
@@ -632,6 +734,15 @@ const PHRASE = {
   text: "",                      /* ← escribe aquí tu frase (con Enter haces salto de línea) */
   sign: "— Marcelo"
 };
+/* LETRA TRADUCIDA que aparece al lado del reproductor, línea por línea.
+   Cada línea: { t: "minuto:segundo en que entra", es: "la traducción" }
+   Ej.:  { t: "0:18", es: "tu traducción aquí" },
+   Para saber en qué segundo entra cada línea, abre fotos.html?sync=1#cancion
+   y mira el reloj (⏱) del recuadro mientras suena. Déjalo vacío y se muestra un aviso. */
+const LYRICS = [
+  /* { t: "0:00", es: "" }, */
+];
+
 const SONG = {
   src: "media/fotos/beautiful.mp3",
   title: "Beautiful",
@@ -965,29 +1076,102 @@ document.addEventListener("play", (e) => {
   document.querySelectorAll("video, audio").forEach(m => { if (m !== e.target && !m.paused) m.pause(); });
 }, true);
 
-/* al llegar a la seccion intenta sonar sola; si el navegador no la deja, queda el boton del disco.
-   Si ella la pausa a mano, no se vuelve a poner sola. Al salir de la seccion se pausa. */
-if ("IntersectionObserver" in window) {
-  new IntersectionObserver((entries) => {
-    entries.forEach(en => {
-      if (en.isIntersecting) {
-        if (!userPaused && audio.paused && !lb.classList.contains("show")) {
-          audio.play().then(() => { autoStarted = true; }).catch(() => {});
-        }
-      } else if (autoStarted && !audio.paused) {
-        audio.pause();
-        autoStarted = false;
-      }
-    });
-  }, { threshold: 0.55 }).observe(document.getElementById("player"));
+/* ---------- letra traducida: cada linea aparece sola en su minuto ---------- */
+const lyStage = document.getElementById("ly-stage");
+let lyLines = [], lyIdx = -2;
+const lyTime = (t) => {
+  if (typeof t === "number") return t;
+  const parts = String(t).trim().split(":").map(parseFloat);
+  return parts.reduce((acc, n) => acc * 60 + (n || 0), 0);
+};
+function lyricsInit(){
+  lyLines = LYRICS.filter(l => l && l.es).map(l => ({ t: lyTime(l.t), es: l.es })).sort((a, b) => a.t - b.t);
+  lyIdx = -2;
+  lyUpdate();
 }
+function lyEl(text, cls){
+  const d = document.createElement("div");
+  d.className = "ly-line " + cls;
+  d.textContent = text;
+  return d;
+}
+function lyUpdate(){
+  if (!lyLines.length) {
+    if (lyIdx !== -3) {
+      lyStage.innerHTML = "";
+      lyStage.appendChild(lyEl("aquí aparecerá la letra traducida, línea por línea, mientras suena la canción", "hint"));
+      lyIdx = -3;
+    }
+    return;
+  }
+  const now = audio.currentTime;
+  let idx = -1;
+  for (let i = 0; i < lyLines.length; i++) { if (lyLines[i].t <= now) idx = i; else break; }
+  if (idx === lyIdx) return;
 
-/* "sigue bajando": lleva a la pared de fotos; brilla mas cuando termina la introduccion */
+  if (idx === lyIdx + 1 && idx >= 0 && lyIdx >= -1) {
+    /* sigue la linea siguiente: la actual se atenua y la nueva aparece */
+    [...lyStage.querySelectorAll(".prev")].forEach(el => { el.classList.add("out"); setTimeout(() => el.remove(), 650); });
+    const cur = lyStage.querySelector(".now");
+    if (cur) { cur.classList.remove("now"); cur.classList.add("prev"); }
+    lyStage.appendChild(lyEl(lyLines[idx].es, "now"));
+  } else {
+    /* salto (adelantar, retroceder, empezar de nuevo): se rearma sin vuelo */
+    lyStage.innerHTML = "";
+    if (idx >= 1) lyStage.appendChild(lyEl(lyLines[idx - 1].es, "prev"));
+    if (idx >= 0) lyStage.appendChild(lyEl(lyLines[idx].es, "now"));
+  }
+  lyIdx = idx;
+}
+audio.addEventListener("timeupdate", lyUpdate);
+audio.addEventListener("seeked", lyUpdate);
+
+/* ?sync=1 → muestra el tiempo exacto de la cancion para anotar en que segundo entra cada linea */
+if (new URLSearchParams(location.search).get("sync") === "1") {
+  const syncEl = document.getElementById("ly-sync");
+  const tick = () => {
+    const t = audio.currentTime;
+    syncEl.textContent = "⏱ " + Math.floor(t / 60) + ":" + (t % 60).toFixed(1).padStart(4, "0");
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+lyricsInit();
+
+/* ---------- pestanas: una seccion a la vez ---------- */
+const VIEWS = ["intro", "fotos", "cancion"];
 const cue = document.getElementById("cue");
-cue.addEventListener("click", () => {
-  document.getElementById("wall-top").scrollIntoView({ behavior: "smooth", block: "start" });
-});
 if (introVideo) introVideo.addEventListener("ended", () => cue.classList.add("hot"));
+let curView = null;
+
+function showView(name){
+  if (!VIEWS.includes(name)) name = "intro";
+  const prev = curView;
+  if (name === prev) return;
+  curView = name;
+  closeLightbox();
+  VIEWS.forEach(v => document.getElementById("v-" + v).classList.toggle("active", v === name));
+  document.querySelectorAll(".tab[data-view]").forEach(t => {
+    if (t.dataset.view === name) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+  document.title = { intro: "Para ti, Cami", fotos: "Nuestros momentos", cancion: "Una canción para ti" }[name];
+
+  /* el video de la introduccion se pausa al irse de su seccion */
+  if (prev === "intro" && introVideo) introVideo.pause();
+
+  /* la cancion intenta sonar sola al entrar a su seccion (si el navegador no la deja, queda el disco);
+     si ella la pausa a mano no vuelve a empezar sola; si salio y sonaba sola, se pausa */
+  if (name === "cancion") {
+    if (!userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
+  } else if (autoStarted && !audio.paused) {
+    audio.pause();
+    autoStarted = false;
+  }
+}
+const fromHash = () => showView(location.hash.replace("#", ""));
+window.addEventListener("hashchange", fromHash);
+fromHash();
 </script>
 </body>
 </html>
