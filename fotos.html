@@ -1172,6 +1172,10 @@ if (new URLSearchParams(location.search).get("tapsync") === "1") {
   const box = document.createElement("div");
   box.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:60;padding:14px 16px 18px;background:#1b1118;border-top:2px solid #f6c667;color:#fff3e4;font-family:'Work Sans',sans-serif;text-align:center;box-shadow:0 -12px 30px rgba(0,0,0,.6)";
   box.innerHTML = `
+    <div id="ts-paste-wrap" style="display:none;margin-bottom:10px">
+      <textarea id="ts-paste" rows="5" placeholder="Pega aquí la letra traducida (una traducción por bloque, con su original debajo si quieres) y toca Cargar" style="width:100%;max-width:640px;font:inherit;font-size:.85rem;padding:8px;border-radius:8px;border:1px solid rgba(246,198,103,.5);background:#120a11;color:#fff3e4"></textarea>
+      <div><button id="ts-load" type="button" style="margin-top:6px">Cargar letra</button></div>
+    </div>
     <div id="ts-info" style="font-size:.78rem;color:#c9a98f;margin-bottom:6px"></div>
     <div id="ts-es" style="font-family:'Caveat',cursive;font-size:1.9rem;line-height:1.1;min-height:2.2em"></div>
     <div id="ts-en" style="font-size:.85rem;color:#a98f9c;min-height:1.3em;margin-bottom:10px"></div>
@@ -1189,11 +1193,18 @@ if (new URLSearchParams(location.search).get("tapsync") === "1") {
   const q = (id) => box.querySelector("#" + id);
   let pos = 0;
   const fmtT = (s) => Math.floor(s / 60) + ":" + (s % 60).toFixed(2).padStart(5, "0");
+  q("ts-load").addEventListener("click", () => {
+    const blocks = parseLetra(q("ts-paste").value);
+    if (!blocks.length) return;
+    letraBlocks = blocks; pos = 0;
+    paintSync();
+  });
   const paintSync = () => {
     const n = letraBlocks.length;
+    q("ts-paste-wrap").style.display = n ? "none" : "block";
     q("ts-info").textContent = n
-      ? (pos < n ? `línea ${pos + 1} de ${n}  ·  ${fmtT(audio.currentTime)}` : "listo: descarga el archivo y reemplaza media/fotos/letra.txt")
-      : "no encuentro media/fotos/letra.txt (pega ahí la letra traducida)";
+      ? (pos < n ? `línea ${pos + 1} de ${n}  ·  ${fmtT(audio.currentTime)}` : "listo: toca ⬇ letra.txt y avísame para publicarlo")
+      : "pega la letra traducida aquí arriba";
     q("ts-es").textContent = pos < n ? letraBlocks[pos].es : (n ? "✓" : "");
     q("ts-en").textContent = pos < n ? letraBlocks[pos].en : "";
   };
