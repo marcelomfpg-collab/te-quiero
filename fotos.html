@@ -1124,7 +1124,7 @@ const LY_HOLD = 8;                          /* segundos que una linea se queda e
    Si la letra sale tarde, sube este numero; si sale antes de tiempo, bájalo.
    Para probar sin editar: fotos.html?lyoffset=1.2#cancion */
 const _lo = parseFloat(new URLSearchParams(location.search).get("lyoffset"));
-let LY_OFFSET = isFinite(_lo) ? _lo : 0.4;
+let LY_OFFSET = isFinite(_lo) ? _lo : 1.8;
 const lyTime = (t) => {
   if (typeof t === "number") return t;
   const parts = String(t).trim().split(":").map(parseFloat);
