@@ -1333,6 +1333,81 @@ if (TAPSYNC) {
   if (!location.hash) location.hash = "#cancion";
 }
 
+/* ---------- modo corregir: ?corregir=1 ----------
+   Para arreglar UNA linea sin volver a marcar todo: elige la linea, escucha, y toca "Entra AQUÍ"
+   (o Enter) justo cuando empieza a cantarse. Solo cambia esa linea. Al final, ⬇ letra.txt. */
+const CORREGIR = new URLSearchParams(location.search).get("corregir") === "1";
+if (CORREGIR) {
+  const REACT_C = 0.3;                      /* se resta el tiempo de reaccion al tocar */
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:60;padding:12px 16px 16px;background:#1b1118;border-top:2px solid #6fd3a0;color:#fff3e4;font-family:'Work Sans',sans-serif;text-align:center;box-shadow:0 -12px 30px rgba(0,0,0,.6)";
+  box.innerHTML = `
+    <div id="co-info" style="font-size:.78rem;color:#9fd9bb;margin-bottom:4px"></div>
+    <div id="co-es" style="font-family:'Caveat',cursive;font-size:1.8rem;line-height:1.1;min-height:1.2em"></div>
+    <div id="co-en" style="font-size:.82rem;color:#a98f9c;min-height:1.2em;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button id="co-prev" type="button">◀ línea anterior</button>
+      <button id="co-next" type="button">línea siguiente ▶</button>
+      <button id="co-go" type="button">⟲ escuchar desde 4 s antes</button>
+      <button id="co-play" type="button">▶ canción</button>
+      <button id="co-now" type="button" style="background:#6fd3a0;color:#10261b;font-weight:700;padding:12px 26px">Entra AQUÍ (Enter)</button>
+      <button id="co-dl" type="button">⬇ letra.txt</button>
+    </div>`;
+  document.body.appendChild(box);
+  box.querySelectorAll("button").forEach(b => {
+    b.style.cssText += ";font:inherit;font-size:.92rem;padding:9px 14px;border-radius:10px;border:1px solid rgba(111,211,160,.5);background:rgba(255,255,255,.07);color:#fff3e4;cursor:pointer";
+  });
+  const q = (id) => box.querySelector("#" + id);
+  const fmtC = (s) => Math.floor(s / 60) + ":" + (s % 60).toFixed(2).padStart(5, "0");
+  const timed = () => letraBlocks.filter(b => b.t !== null && b.es);
+  let sel = 0, followed = true;
+  const paintC = () => {
+    const L = timed();
+    if (!L.length) { q("co-info").textContent = "cargando la letra…"; return; }
+    sel = Math.max(0, Math.min(L.length - 1, sel));
+    const b = L[sel];
+    q("co-info").textContent = `línea ${sel + 1} de ${L.length}  ·  ahora ${fmtC(audio.currentTime)}  ·  entra a las ${fmtC(Math.max(0, lyTime(b.t) - LY_OFFSET))} en pantalla`;
+    q("co-es").textContent = b.es;
+    q("co-en").textContent = b.en;
+  };
+  const rebuild = () => {
+    LYRICS.length = 0;
+    letraBlocks.filter(b => b.t !== null && b.es).forEach(b => LYRICS.push({ t: b.t, es: b.es }));
+    lyricsInit();
+  };
+  q("co-prev").addEventListener("click", () => { sel--; paintC(); });
+  q("co-next").addEventListener("click", () => { sel++; paintC(); });
+  q("co-go").addEventListener("click", () => {
+    const L = timed(); if (!L.length) return;
+    audio.currentTime = Math.max(0, lyTime(L[sel].t) - LY_OFFSET - 4);
+    audio.play().catch(() => {});
+  });
+  q("co-play").addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+  const setHere = () => {
+    const L = timed(); if (!L.length) return;
+    /* t guardado = momento de la cancion + adelanto, para que la linea salga justo cuando se toca */
+    L[sel].t = fmtC(Math.max(0, audio.currentTime - REACT_C + LY_OFFSET));
+    rebuild();
+    paintC();
+  };
+  q("co-now").addEventListener("click", setHere);
+  const playLabel = () => { q("co-play").textContent = audio.paused ? "▶ canción" : "❚❚ pausar"; };
+  audio.addEventListener("play", playLabel); audio.addEventListener("pause", playLabel); playLabel();
+  q("co-dl").addEventListener("click", () => {
+    const out = letraBlocks.map(b => (b.t !== null ? `[${b.t}] ` : "") + b.es + (b.en ? "\n" + b.en : "")).join("\n\n") + "\n";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out], { type: "text/plain;charset=utf-8" }));
+    a.download = "letra.txt";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Enter" && !(e.target && /^(BUTTON|INPUT|TEXTAREA)$/.test(e.target.tagName))) { e.preventDefault(); setHere(); }
+  });
+  audio.addEventListener("timeupdate", paintC);
+  letraReady.then(paintC);
+  if (!location.hash) location.hash = "#cancion";
+}
+
 /* ---------- pestanas: una seccion a la vez ---------- */
 /* ---------- guirnalda de luces del fondo ---------- */
 (function fairyLights(){
@@ -1398,7 +1473,7 @@ function showView(name){
   /* la cancion intenta sonar sola al entrar a su seccion (si el navegador no la deja, queda el disco);
      si ella la pausa a mano no vuelve a empezar sola; si salio y sonaba sola, se pausa */
   if (name === "cancion") {
-    if (!TAPSYNC && !userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
+    if (!TAPSYNC && !CORREGIR && !userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
   } else if (autoStarted && !audio.paused) {
     audio.pause();
     autoStarted = false;
