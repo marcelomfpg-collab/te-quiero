@@ -27,15 +27,24 @@
     background:#140c12;
     position:relative;
   }
-  /* fondo: la sala de ladrillo con luces; fijo detras de todo y oscurecido para que el texto se lea */
+  /* fondo: muro de ladrillo disenado (media/fotos/ladrillo.svg, generado con tools/gen_ladrillo.py),
+     fijo detras de todo, con luz calida desde arriba y vineta para que el texto se lea */
   body::before{
     content:"";
-    position:fixed; inset:0; z-index:-1;
+    position:fixed; inset:0; z-index:-2;
     background:
-      radial-gradient(90% 60% at 50% 30%, rgba(255,170,90,.10), transparent 70%),
-      linear-gradient(180deg, rgba(20,10,16,.45) 0%, rgba(18,10,15,.62) 55%, rgba(14,8,12,.82) 100%),
-      url("media/fotos/fondo.jpg") center 35% / cover no-repeat;
+      radial-gradient(70% 45% at 50% 0%, rgba(255,184,110,.30), transparent 72%),
+      radial-gradient(120% 90% at 50% 40%, rgba(14,8,10,0) 35%, rgba(10,5,8,.70) 100%),
+      linear-gradient(180deg, rgba(22,10,12,.18) 0%, rgba(18,9,12,.38) 60%, rgba(12,6,9,.62) 100%),
+      url("media/fotos/ladrillo.svg") center top / 1000px auto repeat;
   }
+  /* guirnalda de luces colgando del muro (se dibuja con JS segun el ancho) */
+  .fairy{ position:fixed; top:0; left:0; width:100%; height:220px; z-index:-1; pointer-events:none; overflow:hidden; }
+  .fairy svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .fairy .wire{ fill:none; stroke:#1a0f0c; stroke-width:1.6; opacity:.85; }
+  .fairy .glow{ fill:url(#fgl); animation:ftw 3.6s ease-in-out infinite; }
+  .fairy .core{ fill:#ffe2a8; }
+  @keyframes ftw{ 0%,100%{ opacity:.95 } 50%{ opacity:.55 } }
   h1,h2{ margin:0; }
   .script{ font-family:"Caveat", cursive; }
   .chalk{
@@ -648,6 +657,8 @@
 </style>
 </head>
 <body>
+
+<div class="fairy" id="fairy" aria-hidden="true"></div>
 
 <!-- barra de pestanas: cada una abre una seccion distinta -->
 <nav class="topnav" aria-label="Secciones">
@@ -1323,6 +1334,46 @@ if (TAPSYNC) {
 }
 
 /* ---------- pestanas: una seccion a la vez ---------- */
+/* ---------- guirnalda de luces del fondo ---------- */
+(function fairyLights(){
+  const box = document.getElementById("fairy");
+  if(!box) return;
+  const NS = "http://www.w3.org/2000/svg";
+  function draw(){
+    const w = Math.max(320, window.innerWidth || 1200);
+    const strands = 2;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + w + " 220");
+    svg.setAttribute("preserveAspectRatio", "xMidYMin slice");
+    svg.innerHTML = '<defs><radialGradient id="fgl"><stop offset="0" stop-color="#ffd48a" stop-opacity=".95"/>' +
+      '<stop offset=".35" stop-color="#ffb35c" stop-opacity=".38"/><stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/></radialGradient></defs>';
+    for(let s = 0; s < strands; s++){
+      const y0 = 58 + s * 40 + (s % 2 ? 10 : 0);
+      const sag = 26 + s * 7;
+      const x0 = -10, x1 = w + 10;
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute("class", "wire");
+      path.setAttribute("d", "M" + x0 + " " + (y0 - 18) + " Q" + (w / 2) + " " + (y0 + sag * 2) + " " + x1 + " " + (y0 - 18));
+      svg.appendChild(path);
+      const n = Math.round(w / 64);
+      for(let i = 1; i < n; i++){
+        const t = i / n;
+        const x = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * (w / 2) + t * t * x1;
+        const y = (1 - t) * (1 - t) * (y0 - 18) + 2 * (1 - t) * t * (y0 + sag * 2) + t * t * (y0 - 18) + 5;
+        const g = document.createElementNS(NS, "circle");
+        g.setAttribute("class", "glow"); g.setAttribute("cx", x); g.setAttribute("cy", y + 4); g.setAttribute("r", 22);
+        g.style.animationDelay = (-((i * 7 + s * 13) % 36) / 10) + "s";
+        const c = document.createElementNS(NS, "ellipse");
+        c.setAttribute("class", "core"); c.setAttribute("cx", x); c.setAttribute("cy", y + 4); c.setAttribute("rx", 3); c.setAttribute("ry", 4.2);
+        svg.appendChild(g); svg.appendChild(c);
+      }
+    }
+    box.innerHTML = ""; box.appendChild(svg);
+  }
+  draw();
+  let tm; window.addEventListener("resize", function(){ clearTimeout(tm); tm = setTimeout(draw, 150); });
+})();
+
 const VIEWS = ["intro", "fotos", "cancion"];
 const cue = document.getElementById("cue");
 if (introVideo) introVideo.addEventListener("ended", () => cue.classList.add("hot"));
