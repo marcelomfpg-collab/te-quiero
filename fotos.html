@@ -444,6 +444,12 @@
     gap:12px;
     color:#f3d9c4;
   }
+  .vpick{ display:flex; gap:8px; justify-content:center; margin:10px 0 0; }
+  .vpick button{
+    font-size:1.15rem; line-height:1.2; padding:2px 16px; border-radius:99px; cursor:pointer;
+    border:1px solid rgba(242,217,160,.5); background:transparent; color:#f2d9a0;
+  }
+  .vpick button.on{ background:#f2d9a0; color:#242423; }
   .vscreen .playdot{ width:60px; height:60px; font-size:1.5rem; padding-left:4px; }
   .vscreen .ph-text{ font-size:1.3rem; color:#f3d9c4; text-align:center; padding:0 10px; line-height:1.1; }
 
@@ -876,7 +882,7 @@ const SIGN = {
 };
 
 const PHOTOS = [
-  { src: "media/fotos/foto-01.jpg", caption: "", video: "media/fotos/video-01.mp4", poster: "" },
+  { src: "media/fotos/foto-01.jpg", caption: "", videos: ["media/fotos/video-01.mp4", "media/fotos/video-01b.mp4"], poster: "" },
   { src: "media/fotos/foto-02.jpg", caption: "", video: "media/fotos/sorpresa.mp4", poster: "" },
   { src: "", caption: "", video: "", poster: "" },
   { src: "", caption: "", video: "", poster: "" },
@@ -927,22 +933,35 @@ function lbFill(i){
   lbIn.innerHTML = frameInner(p, i);
   lbNoteIn.classList.remove("wide");
   lbNoteIn.style.setProperty("--ratio", ".5625");
+  /* un recuerdo puede traer uno o varios videos: video: "a.mp4"  o  videos: ["a.mp4", "b.mp4"] */
+  const vids = (p.videos && p.videos.length) ? p.videos : (p.video ? [p.video] : []);
   lbNoteIn.innerHTML = `
     <p class="chalk e">mi comentario</p>
-    <div class="vscreen${p.video ? "" : " empty"}">
-      ${p.video
-        ? `<video controls playsinline preload="metadata" poster="${p.poster || ""}">
-             <source src="${p.video}" type="video/mp4">
-           </video>`
+    <div class="vscreen${vids.length ? "" : " empty"}">
+      ${vids.length
+        ? `<video controls playsinline preload="metadata" poster="${p.poster || ""}" src="${vids[0]}"></video>`
         : `<div class="screen-in">
              <div class="playdot">▶</div>
              <span class="ph-text">aquí va mi video comentario</span>
            </div>`}
     </div>
+    ${vids.length > 1 ? `<div class="vpick">${vids.map((_, k) => `<button type="button" class="chalk${k ? "" : " on"}" data-k="${k}">video ${k + 1}</button>`).join("")}</div>` : ""}
     <p class="chalk sig">— Marcelo</p>`;
 
   /* el recuadro se adapta a video vertical u horizontal segun el archivo real */
   const v = lbNoteIn.querySelector("video");
+  if (v && vids.length > 1) {
+    const pills = [...lbNoteIn.querySelectorAll(".vpick button")];
+    let cur = 0;
+    const go = (k, play) => {
+      cur = k;
+      v.pause(); v.removeAttribute("poster"); v.src = vids[k]; v.load();
+      pills.forEach((b, j) => b.classList.toggle("on", j === k));
+      if (play) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    };
+    pills.forEach((b, k) => b.addEventListener("click", () => go(k, true)));
+    v.addEventListener("ended", () => { if (cur + 1 < vids.length) go(cur + 1, true); });   /* al acabar uno sigue el siguiente */
+  }
   if (v) {
     const fit = () => {
       if (!v.videoWidth || !v.videoHeight) return;
