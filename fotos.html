@@ -659,12 +659,12 @@
   }
   .tg-pet svg{ width:100%; height:100%; display:block; overflow:visible; pointer-events:none; transition:transform .25s; }
   .tg-pet .leg, .tg-pet .arm{ transform-box:fill-box; transform-origin:50% 6%; }
-  .tg-pet.walk .ll, .tg-pet.walk .ra{ animation:tgstep .34s ease-in-out infinite; }
-  .tg-pet.walk .rl, .tg-pet.walk .la{ animation:tgstep .34s ease-in-out infinite reverse; }
+  .tg-pet.walk .ll, .tg-pet.walk .ra{ animation:tgstep .22s ease-in-out infinite; }
+  .tg-pet.walk .rl, .tg-pet.walk .la{ animation:tgstep .22s ease-in-out infinite reverse; }
   @keyframes tgstep{ 0%,100%{ transform:rotate(-26deg); } 50%{ transform:rotate(26deg); } }
   .tg-pet .eye{ transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
   @keyframes tgblink{ 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.1); } }
-  .tg-pet.walk .head{ animation:tgnod .34s ease-in-out infinite; }
+  .tg-pet.walk .head{ animation:tgnod .22s ease-in-out infinite; }
   @keyframes tgnod{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-2px) rotate(2deg); } }
   .tg-pet.caught{ cursor:pointer; z-index:95; filter:drop-shadow(0 14px 14px rgba(0,0,0,.55)); }
   .tg-pet.caught .ra{ transform-origin:50% 10%; animation:tgwave .6s ease-in-out infinite; }
@@ -1537,7 +1537,7 @@ if (CORREGIR) {
   if (qs.get("tapsync") === "1" || qs.get("corregir") === "1") { pet.remove(); back.remove(); return; }
   const svg = pet.querySelector("svg");
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const SPEED = reduce ? 70 : 170;          /* pixeles por segundo (varia un poco en cada tramo) */
+  const SPEED = reduce ? 120 : 340;         /* pixeles por segundo (varia un poco en cada tramo) */
   let spd = SPEED;
   let W = 60, H = 84, x = 0, y = 0, tx = 0, ty = 0, dir = 1, mode = "walk", wait = 0, caught = false, last = performance.now(), t = 0;
   const navH = () => { const n = document.querySelector(".topnav"); return n ? n.getBoundingClientRect().height : 0; };
@@ -1572,7 +1572,7 @@ if (CORREGIR) {
       const step = Math.min(spd * dt, d);
       x += dx / d * step; y += dy / d * step;
       if (Math.abs(dx) > 6) dir = dx > 0 ? 1 : -1;
-      place(reduce ? 0 : -Math.abs(Math.sin(t * 9.5)) * 4);
+      place(reduce ? 0 : -Math.abs(Math.sin(t * 14)) * 4);
     }
   }
   requestAnimationFrame(frame);
