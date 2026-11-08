@@ -650,7 +650,60 @@
     .lb-photo .ph-icon{ font-size:2.2rem; }
   }
 
+  /* ---------- la tortuga mascota: pasea por toda la pagina; si la atrapas, se acerca y suelta una nota ---------- */
+  .tg-pet{
+    position:fixed; left:0; top:0; z-index:40;
+    width:84px; height:60px; padding:0; border:0; background:none; cursor:pointer;
+    transform-origin:0 0; will-change:transform; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    filter:drop-shadow(0 6px 5px rgba(0,0,0,.45));
+  }
+  .tg-pet svg{ width:100%; height:100%; display:block; overflow:visible; pointer-events:none; transition:transform .25s; }
+  .tg-pet .leg{ transform-box:fill-box; transform-origin:50% 10%; }
+  .tg-pet.walk .l1, .tg-pet.walk .l4{ animation:tgstep .5s ease-in-out infinite; }
+  .tg-pet.walk .l2, .tg-pet.walk .l3{ animation:tgstep .5s ease-in-out infinite reverse; }
+  @keyframes tgstep{ 0%,100%{ transform:rotate(-24deg); } 50%{ transform:rotate(24deg); } }
+  .tg-pet .eye{ transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
+  @keyframes tgblink{ 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.1); } }
+  .tg-pet.walk .head{ animation:tgnod .5s ease-in-out infinite; }
+  @keyframes tgnod{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-2px); } }
+  .tg-pet.caught{ cursor:default; z-index:95; filter:drop-shadow(0 14px 14px rgba(0,0,0,.55)); }
+  .tg-back{
+    position:fixed; inset:0; z-index:90;
+    background:radial-gradient(80% 60% at 50% 38%, rgba(60,34,22,.55), rgba(8,4,6,.86));
+    display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px 0;
+    opacity:0; pointer-events:none; transition:opacity .5s;
+  }
+  .tg-back.on{ opacity:1; pointer-events:auto; }
+  .tg-note{
+    position:relative; width:100%; max-width:560px; box-sizing:border-box;
+    max-height:calc(100vh - var(--tg-h, 260px) - 7vh);
+    overflow:auto; opacity:0;
+    padding:26px 26px 20px; border-radius:3px;
+    color:#27314a; font-family:"Caveat", cursive; font-size:clamp(1.3rem, 3.6vw, 1.85rem); line-height:1.38;
+    background:
+      repeating-linear-gradient(180deg, transparent 0, transparent calc(1.38em - 1px), rgba(70,90,130,.16) calc(1.38em - 1px), rgba(70,90,130,.16) 1.38em),
+      linear-gradient(160deg, #f3eee0, #e6dfcc);
+    box-shadow:0 22px 50px rgba(0,0,0,.6), inset 0 0 40px rgba(120,96,60,.18);
+    transform:rotate(-1.5deg);
+  }
+  .tg-note p{ margin:0; }
+  .tg-back.on .tg-note{ animation:tgdrop .9s .8s cubic-bezier(.3,1.35,.5,1) both; }
+  @keyframes tgdrop{
+    from{ opacity:0; transform:translateY(-70px) rotate(-9deg) scale(.92); }
+    to{ opacity:1; transform:translateY(0) rotate(-1.5deg) scale(1); }
+  }
+  .tg-let{
+    display:block; margin:14px 0 0 auto; font:inherit; font-size:1.15em; color:#27314a;
+    padding:2px 14px; border-radius:99px; border:1.5px solid rgba(39,49,74,.45); background:rgba(255,255,255,.45); cursor:pointer;
+  }
+  .tg-let:hover{ background:rgba(255,255,255,.8); }
+  .tg-x{
+    position:absolute; right:14px; top:12px; width:40px; height:40px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.35); background:rgba(0,0,0,.35); color:#fff; font-size:1.3rem; cursor:pointer;
+  }
+
   @media (prefers-reduced-motion: reduce){
+    .tg-pet .eye, .tg-pet.walk .head{ animation:none; }
     .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic, .view.active, .ly-line.now{ animation:none; }
     .lb-notewrap{ transition:none; }
   }
@@ -659,6 +712,39 @@
 <body>
 
 <div class="fairy" id="fairy" aria-hidden="true"></div>
+
+<!-- la tortuga: pasea sola; si la atrapas se acerca y suelta una nota (texto en #tg-texto) -->
+<button class="tg-pet walk" id="tg-pet" type="button" tabindex="-1" aria-label="Una tortuguita: atrápala">
+  <svg viewBox="0 0 140 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect class="leg l2" x="36" y="68" width="15" height="22" rx="7.5" fill="#86b52e"/>
+    <rect class="leg l4" x="92" y="68" width="15" height="22" rx="7.5" fill="#86b52e"/>
+    <path d="M24 72 Q6 70 4 80 Q14 82 28 78 Z" fill="#a5d03a"/>
+    <ellipse cx="70" cy="74" rx="47" ry="12" fill="#b9e04a"/>
+    <path d="M20 74 C18 30 48 12 74 12 C102 12 124 34 120 74 Z" fill="#7fb02e" stroke="#5f8f1f" stroke-width="2"/>
+    <g fill="#9fcf3c" opacity=".85">
+      <polygon points="74,22 88,30 88,46 74,54 60,46 60,30"/>
+      <polygon points="46,36 58,43 58,57 46,64 34,57 34,43"/>
+      <polygon points="102,36 114,43 114,57 102,64 90,57 90,43"/>
+    </g>
+    <path d="M20 74 L120 74" stroke="#5f8f1f" stroke-width="3" stroke-linecap="round"/>
+    <rect class="leg l1" x="54" y="70" width="15" height="22" rx="7.5" fill="#a5d03a"/>
+    <rect class="leg l3" x="106" y="70" width="15" height="22" rx="7.5" fill="#a5d03a"/>
+    <g class="head">
+      <ellipse cx="116" cy="66" rx="12" ry="9" fill="#b9e04a"/>
+      <circle cx="123" cy="56" r="17" fill="#c3e756"/>
+      <g class="eye"><circle cx="129" cy="50" r="7" fill="#fff"/><circle cx="131" cy="50.5" r="4" fill="#1d2a12"/><circle cx="132.5" cy="48.6" r="1.4" fill="#fff"/></g>
+      <ellipse cx="121" cy="62" rx="4" ry="2.6" fill="#ff9aa8" opacity=".55"/>
+      <path d="M127 63 Q133 69 139 62" fill="none" stroke="#4a6b12" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+</button>
+<div class="tg-back" id="tg-back" aria-hidden="true">
+  <button class="tg-x" id="tg-x" type="button" aria-label="Cerrar">✕</button>
+  <div class="tg-note" role="dialog" aria-label="Mensaje de la tortuga">
+    <p id="tg-texto">Si un día sientes que no eres suficiente, quiero que vuelvas a leer esto y recuerdes que para mí lo eres siempre. No tienes que ser perfecta, ni tenerlo todo resuelto, ni demostrarle nada a nadie. Solo tienes que ser tú, y yo te voy a querer exactamente igual.</p>
+    <button class="tg-let" id="tg-let" type="button">soltarla ♡</button>
+  </div>
+</div>
 
 <!-- barra de pestanas: cada una abre una seccion distinta -->
 <nav class="topnav" aria-label="Secciones">
@@ -1447,6 +1533,84 @@ if (CORREGIR) {
   }
   draw();
   let tm; window.addEventListener("resize", function(){ clearTimeout(tm); tm = setTimeout(draw, 150); });
+})();
+
+/* ---------- la tortuga mascota ---------- */
+(function tortuga(){
+  const qs = new URLSearchParams(location.search);
+  const pet = document.getElementById("tg-pet"), back = document.getElementById("tg-back");
+  if (!pet || !back) return;
+  if (qs.get("tapsync") === "1" || qs.get("corregir") === "1") { pet.remove(); back.remove(); return; }
+  const svg = pet.querySelector("svg");
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const SPEED = reduce ? 26 : 62;           /* pixeles por segundo */
+  let W = 84, H = 60, x = 0, y = 0, tx = 0, ty = 0, dir = 1, mode = "walk", wait = 0, caught = false, last = performance.now(), t = 0;
+  const navH = () => { const n = document.querySelector(".topnav"); return n ? n.getBoundingClientRect().height : 0; };
+  const vw = () => window.innerWidth || document.documentElement.clientWidth || 1000;
+  const vh = () => window.innerHeight || document.documentElement.clientHeight || 700;
+  const size = () => { W = vw() < 640 ? 64 : 84; H = W * 100 / 140; pet.style.width = W + "px"; pet.style.height = H + "px"; };
+  const pick = () => {
+    const m = 10;
+    tx = m + Math.random() * Math.max(1, vw() - W - 2 * m);
+    ty = navH() + m + Math.random() * Math.max(1, vh() - H - navH() - 2 * m);
+  };
+  const place = (bob) => {
+    pet.style.transform = "translate(" + x.toFixed(1) + "px," + (y + bob).toFixed(1) + "px)";
+    svg.style.transform = "scaleX(" + dir + ")";
+  };
+  size();
+  x = Math.random() * Math.max(1, vw() - W); y = navH() + 20 + Math.random() * Math.max(1, vh() - H - navH() - 40);
+  pick(); place(0);
+
+  function frame(now){
+    requestAnimationFrame(frame);
+    if (caught) return;
+    const dt = Math.min(0.25, (now - last) / 1000); last = now; t += dt;
+    if (mode === "rest") {
+      wait -= dt;
+      if (wait <= 0) { pick(); mode = "walk"; pet.classList.add("walk"); }
+      place(0);
+    } else {
+      const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy);
+      if (d < 3) { mode = "rest"; wait = 0.6 + Math.random() * 2.4; pet.classList.remove("walk"); place(0); return; }
+      const step = SPEED * dt;
+      x += dx / d * step; y += dy / d * step;
+      if (Math.abs(dx) > 6) dir = dx > 0 ? 1 : -1;
+      place(reduce ? 0 : Math.sin(t * 12) * 1.4);
+    }
+  }
+  requestAnimationFrame(frame);
+
+  /* atrapada: se acerca a la pantalla y suelta la nota */
+  pet.addEventListener("click", () => {
+    if (caught) return;
+    caught = true;
+    pet.classList.remove("walk"); pet.classList.add("caught");
+    const Wc = Math.min(vw() * 0.7, 320), Hc = Wc * 100 / 140;
+    const cx = (vw() - Wc) / 2, cy = vh() - Hc - 18;
+    back.style.setProperty("--tg-h", (Hc + 26) + "px");
+    svg.style.transform = "scaleX(1)";
+    pet.style.transition = "transform 1s cubic-bezier(.22,.9,.28,1)";
+    pet.style.transform = "translate(" + cx + "px," + cy + "px) scale(" + (Wc / W) + ")";
+    back.classList.add("on"); back.setAttribute("aria-hidden", "false");
+  });
+  function release(){
+    if (!caught) return;
+    back.classList.remove("on"); back.setAttribute("aria-hidden", "true");
+    pet.style.transform = "translate(" + x + "px," + y + "px) scale(1)";
+    setTimeout(() => {
+      pet.style.transition = ""; pet.classList.remove("caught");
+      caught = false; last = performance.now(); mode = "walk"; pick(); pet.classList.add("walk");
+    }, 1000);
+  }
+  document.getElementById("tg-let").addEventListener("click", release);
+  document.getElementById("tg-x").addEventListener("click", release);
+  back.addEventListener("click", (e) => { if (e.target === back) release(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && caught) release(); });
+  window.addEventListener("resize", () => {
+    if (caught) return;
+    size(); x = Math.min(x, Math.max(0, vw() - W)); y = Math.min(y, Math.max(0, vh() - H)); pick();
+  });
 })();
 
 const VIEWS = ["intro", "fotos", "cancion"];
