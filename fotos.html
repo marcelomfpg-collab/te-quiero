@@ -689,6 +689,33 @@
   @keyframes tgblink{ 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.1); } }
   .tg-pet.walk .head{ animation:tgnod .22s ease-in-out infinite; }
   @keyframes tgnod{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-2px) rotate(2deg); } }
+  /* en la seccion Cancion, con la musica sonando: se pone a bailar */
+  .tg-pet.dance svg{ transform-origin:50% 100%; animation:tgbounce 1s ease-in-out infinite; }
+  @keyframes tgbounce{
+    0%,100%{ transform:translateY(0) scale(1.06,.92) rotate(-7deg); }
+    25%{ transform:translateY(-16px) scale(.96,1.05) rotate(-3deg); }
+    50%{ transform:translateY(0) scale(1.06,.92) rotate(7deg); }
+    75%{ transform:translateY(-16px) scale(.96,1.05) rotate(3deg); }
+  }
+  .tg-pet.dance .ra{ transform-origin:50% 10%; animation:tgarmr .5s ease-in-out infinite alternate; }
+  .tg-pet.dance .la{ transform-origin:50% 10%; animation:tgarml .5s ease-in-out infinite alternate; }
+  @keyframes tgarmr{ from{ transform:rotate(-150deg); } to{ transform:rotate(-95deg); } }
+  @keyframes tgarml{ from{ transform:rotate(95deg); } to{ transform:rotate(150deg); } }
+  .tg-pet.dance .ll{ animation:tgfoot .5s ease-in-out infinite alternate; }
+  .tg-pet.dance .rl{ animation:tgfoot .5s ease-in-out infinite alternate-reverse; }
+  @keyframes tgfoot{ from{ transform:rotate(-14deg); } to{ transform:rotate(14deg); } }
+  .tg-pet.dance .head{ animation:tghead .5s ease-in-out infinite alternate; }
+  @keyframes tghead{ from{ transform:translateY(1px) rotate(-6deg); } to{ transform:translateY(-3px) rotate(6deg); } }
+  .tg-fx{
+    position:fixed; z-index:39; pointer-events:none; line-height:1;
+    color:#f2d9a0; text-shadow:0 2px 6px rgba(0,0,0,.6);
+    animation:tgfloat 1.7s ease-out forwards;
+  }
+  @keyframes tgfloat{
+    from{ opacity:0; transform:translate(0,0) rotate(-10deg) scale(.7); }
+    15%{ opacity:1; }
+    to{ opacity:0; transform:translate(var(--dx,20px),-110px) rotate(14deg) scale(1.15); }
+  }
   .tg-pet.caught{ cursor:pointer; z-index:95; filter:drop-shadow(0 14px 14px rgba(0,0,0,.55)); }
   .tg-pet.caught .ra{ transform-origin:50% 10%; animation:tgwave .6s ease-in-out infinite; }
   @keyframes tgwave{ 0%,100%{ transform:rotate(-155deg); } 50%{ transform:rotate(-125deg); } }
@@ -724,7 +751,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .tg-pet .eye, .tg-pet.walk .head{ animation:none; }
+    .tg-pet .eye, .tg-pet.walk .head, .tg-pet.dance svg, .tg-pet.dance .head, .tg-pet.dance .arm, .tg-pet.dance .leg{ animation:none; }
     .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic, .view.active, .ly-line.now{ animation:none; }
     .lb-notewrap{ transition:none; }
   }
@@ -1603,7 +1630,23 @@ if (CORREGIR) {
   const vw = () => window.innerWidth || document.documentElement.clientWidth || 1000;
   const vh = () => window.innerHeight || document.documentElement.clientHeight || 700;
   const size = () => { W = vw() < 640 ? 50 : 62; H = W * 1.4; pet.style.width = W + "px"; pet.style.height = H + "px"; };
+  /* en la seccion Cancion, con la musica sonando, se va a una esquina y baila */
+  const songEl = document.getElementById("song-audio"), cancionEl = document.getElementById("v-cancion");
+  const wantDance = () => !!(songEl && cancionEl && !songEl.paused && cancionEl.classList.contains("active"));
+  let dancing = false, fxT = 0, goDance = false;
+  const NOTES = ["♪", "♫", "♡", "♪", "♬"];
+  const note = () => {
+    const s = document.createElement("span");
+    s.className = "tg-fx"; s.textContent = NOTES[Math.floor(Math.random() * NOTES.length)];
+    s.style.left = (x + W * (0.1 + Math.random() * 0.8)) + "px"; s.style.top = (y - 4) + "px";
+    s.style.fontSize = (18 + Math.random() * 12) + "px";
+    s.style.setProperty("--dx", (Math.random() * 70 - 35) + "px");
+    document.body.appendChild(s);
+    s.addEventListener("animationend", () => s.remove());
+  };
   const pick = () => {
+    if (wantDance()) { spd = SPEED; tx = 6; ty = Math.max(navH() + 10, vh() * 0.5 - H / 2); goDance = true; return; }   /* borde izquierdo, a media altura (no tapa el disco ni la letra) */
+    goDance = false;
     spd = SPEED * (0.75 + Math.random() * 0.5);
     const m = 10;
     tx = m + Math.random() * Math.max(1, vw() - W - 2 * m);
@@ -1621,13 +1664,29 @@ if (CORREGIR) {
     requestAnimationFrame(frame);
     if (caught) return;
     const dt = Math.min(0.25, (now - last) / 1000); last = now; t += dt;
+    const wd = wantDance();
+    if (wd && !goDance && !dancing) { pick(); mode = "walk"; pet.classList.add("walk"); }     /* empieza la musica: va a bailar */
+    if (!wd && (goDance || dancing)) {                                                         /* para la musica o cambia de seccion */
+      goDance = false;
+      if (dancing) { dancing = false; pet.classList.remove("dance"); }
+      mode = "rest"; wait = 0.3; pet.classList.remove("walk");
+    }
+    if (dancing) {
+      place(0);
+      if (!reduce) { fxT += dt; if (fxT > 0.6) { fxT = 0; note(); } }
+      return;
+    }
     if (mode === "rest") {
       wait -= dt;
       if (wait <= 0) { pick(); mode = "walk"; pet.classList.add("walk"); }
       place(0);
     } else {
       const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy);
-      if (d < 4) { mode = "rest"; wait = 0.3 + Math.random() * 1.2; pet.classList.remove("walk"); place(0); return; }
+      if (d < 4) {
+        pet.classList.remove("walk");
+        if (goDance && wd) { dancing = true; mode = "dance"; dir = 1; fxT = 0.6; pet.classList.add("dance"); place(0); return; }
+        mode = "rest"; wait = 0.3 + Math.random() * 1.2; place(0); return;
+      }
       const step = Math.min(spd * dt, d);
       x += dx / d * step; y += dy / d * step;
       if (Math.abs(dx) > 6) dir = dx > 0 ? 1 : -1;
@@ -1639,8 +1698,8 @@ if (CORREGIR) {
   /* atrapada: se acerca a la pantalla y suelta la nota */
   pet.addEventListener("click", () => {
     if (caught) { release(); return; }          /* ya atrapada: tocarla la suelta */
-    caught = true;
-    pet.classList.remove("walk"); pet.classList.add("caught");
+    caught = true; dancing = false; goDance = false;
+    pet.classList.remove("walk", "dance"); pet.classList.add("caught");
     const Wc = Math.min(vw() * 0.5, vh() * 0.32, 230), Hc = Wc * 1.4;
     const cx = (vw() - Wc) / 2, cy = vh() - Hc - 12;
     back.style.setProperty("--tg-h", (Hc + 20) + "px");
@@ -1663,7 +1722,9 @@ if (CORREGIR) {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && caught) release(); });
   window.addEventListener("resize", () => {
     if (caught) return;
-    size(); x = Math.min(x, Math.max(0, vw() - W)); y = Math.min(y, Math.max(0, vh() - H)); pick();
+    size(); x = Math.min(x, Math.max(0, vw() - W)); y = Math.min(y, Math.max(0, vh() - H));
+    if (dancing) { dancing = false; pet.classList.remove("dance"); mode = "walk"; pet.classList.add("walk"); }
+    pick();
   });
 })();
 
