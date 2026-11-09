@@ -253,7 +253,24 @@
     overflow:hidden;
     position:relative;
   }
-  .photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo img{ width:100%; height:100%; object-fit:cover; display:block; transition:opacity .13s ease; }
+  .photo.multi img{ cursor:pointer; }
+  .more{                                        /* etiqueta "3 fotos" en la miniatura */
+    position:absolute; top:6px; right:6px;
+    font-family:"Caveat", cursive; font-size:.95rem; line-height:1;
+    padding:3px 8px 4px; border-radius:99px;
+    background:rgba(36,36,35,.78); color:#f2d9a0;
+  }
+  .ppick{                                       /* numeritos sobre la foto ampliada */
+    position:absolute; left:0; right:0; bottom:10px;
+    display:flex; gap:8px; justify-content:center;
+  }
+  .ppick button{
+    width:30px; height:30px; border-radius:50%; cursor:pointer; padding:0;
+    font-family:"Caveat", cursive; font-size:1.2rem; line-height:1;
+    border:1px solid rgba(242,217,160,.7); background:rgba(36,36,35,.62); color:#f2d9a0;
+  }
+  .ppick button.on{ background:#f2d9a0; color:#242423; }
 
   /* hueco vacio, listo para recibir la foto */
   .frame.empty .photo,
@@ -835,7 +852,10 @@
                poster  → imagen de portada (opcional)
                eyebrow / title / caption → los textos de la sección
    SIGN     → los textos del letrero de pizarra sobre la pared de fotos.
-   PHOTOS   → las 10 fotos. Cada una tiene:
+   PHOTOS   → los recuerdos (ahora 12). Cada uno tiene:
+               photos  → (opcional) varias fotos del mismo momento: ["a.jpg","b.jpg"].
+                         Al abrir el recuerdo salen numeritos 1 2 3 sobre la foto
+                         (o tocas la foto para pasar a la siguiente). src = la portada.
                src     → ruta de la foto (ej. "media/fotos/01.jpg").
                          Déjalo vacío "" y se ve el hueco con su marco.
                caption → texto chiquito debajo de la foto (opcional)
@@ -878,20 +898,22 @@ const SONG = {
 const SIGN = {
   line1: "para ti, Cami",
   title: "Nuestros momentos",
-  line3: "diez recuerdos que quería que vieras"
+  line3: "doce recuerdos que quería que vieras"
 };
 
 const PHOTOS = [
   { src: "media/fotos/foto-01.jpg", caption: "", videos: ["media/fotos/video-01.mp4", "media/fotos/video-01b.mp4"], poster: "" },
   { src: "media/fotos/foto-02.jpg", caption: "", video: "media/fotos/sorpresa.mp4", poster: "" },
   { src: "media/fotos/foto-03.jpg", caption: "", video: "", poster: "" },
-  { src: "", caption: "", video: "", poster: "" },
-  { src: "", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-04a.jpg", photos: ["media/fotos/foto-04a.jpg", "media/fotos/foto-04b.jpg"], caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-05a.jpg", photos: ["media/fotos/foto-05a.jpg", "media/fotos/foto-05b.jpg", "media/fotos/foto-05c.jpg"], caption: "", video: "", poster: "" },
   { src: "media/fotos/foto-06.jpg", caption: "", video: "media/fotos/video-06.mp4", poster: "" },
   { src: "media/fotos/foto-07.jpg", caption: "", video: "media/fotos/video-07.mp4", poster: "" },
-  { src: "", caption: "", video: "", poster: "" },
-  { src: "", caption: "", video: "", poster: "" },
-  { src: "", caption: "", video: "", poster: "" }
+  { src: "media/fotos/foto-08.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-09.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-10.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-11.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-12.jpg", caption: "", video: "", poster: "" }
 ];
 
 /* ------------------------- render (no tocar) ------------------------- */
@@ -913,13 +935,16 @@ const lbNoteIn = document.getElementById("lb-note-in");
 let lbIndex = -1, lbThumb = null, lbTimer = null;
 let frameEls = [];
 
-function frameInner(p, i){
+function frameInner(p, i, full){
   const n = String(i + 1).padStart(2, "0");
+  const many = (p.photos && p.photos.length > 1) ? p.photos : null;   /* varias fotos del mismo momento */
   return `
-    <div class="photo">
+    <div class="photo${many && full ? " multi" : ""}">
       ${p.src
         ? `<img src="${p.src}" alt="${p.caption || "recuerdo " + n}" loading="lazy">`
         : `<div class="ph"><span class="ph-icon">📷</span><span class="ph-text">tu foto aquí</span></div>`}
+      ${many && !full ? `<span class="more">${many.length} fotos</span>` : ""}
+      ${many && full ? `<div class="ppick">${many.map((_, k) => `<button type="button" data-k="${k}" class="${k ? "" : "on"}" aria-label="foto ${k + 1}">${k + 1}</button>`).join("")}</div>` : ""}
     </div>
     <figcaption>
       <span class="num">${n}</span>
@@ -930,7 +955,22 @@ function frameInner(p, i){
 function lbFill(i){
   const p = PHOTOS[i];
   lbPhoto.classList.toggle("empty", !p.src);
-  lbIn.innerHTML = frameInner(p, i);
+  lbIn.innerHTML = frameInner(p, i, true);
+  /* varias fotos: numeritos sobre la foto, o tocar la foto para pasar a la siguiente */
+  if (p.photos && p.photos.length > 1) {
+    const img = lbIn.querySelector(".photo img");
+    const dots = [...lbIn.querySelectorAll(".ppick button")];
+    let cur = 0;
+    const show = (k) => {
+      cur = (k + p.photos.length) % p.photos.length;
+      img.style.opacity = 0;
+      setTimeout(() => { img.src = p.photos[cur]; img.style.opacity = 1; }, 130);
+      dots.forEach((b, j) => b.classList.toggle("on", j === cur));
+    };
+    dots.forEach((b, k) => b.addEventListener("click", (e) => { e.stopPropagation(); show(k); }));
+    img.addEventListener("click", () => show(cur + 1));
+    p.photos.forEach(s => { const pre = new Image(); pre.src = s; });   /* precarga */
+  }
   lbNoteIn.classList.remove("wide");
   lbNoteIn.style.setProperty("--ratio", ".5625");
   /* un recuerdo puede traer uno o varios videos: video: "a.mp4"  o  videos: ["a.mp4", "b.mp4"] */
