@@ -746,7 +746,7 @@
     document.getElementById("decay").classList.add("fade");
     document.getElementById("motes").classList.add("fade");
     document.getElementById("flash").classList.add("go");
-    setTimeout(() => { location.replace("index.html"); }, 2400);
+    setTimeout(() => { location.replace("index.html?v=" + Date.now()); }, 2400);   /* ?v= para que nunca cargue una copia vieja guardada */
   }
 
   function replay(){
