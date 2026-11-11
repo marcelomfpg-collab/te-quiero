@@ -6,7 +6,7 @@
 <title>Nuestro Atardecer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=Caveat:wght@500;700&family=Work+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=Caveat:wght@500;700&family=Work+Sans:wght@400;500&family=Neonderthaw&display=swap" rel="stylesheet">
 <style>
   :root{
     --sun:#ff9a5a;
@@ -224,8 +224,106 @@
   }
   .relic.in.gone{ opacity:0; transition:opacity 1.4s ease; }
 
+  /* ---------- el titulo es un letrero de neon malogrado, cubierto de polvo ---------- */
+  .inner h1{ visibility:hidden; }                  /* el titulo de verdad lo hace el letrero (mismo lugar) */
+  .neon{
+    position:fixed; z-index:3; left:50%; top:30%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    opacity:0; transition:opacity 1.6s ease;
+    --on:#fff1f4; --glow:var(--coral); --off:#6e4d5f;
+  }
+  .neon.in{ opacity:1; }
+  .neon.in.gone{ opacity:0; transition:opacity 1.2s ease; }
+  .neon .panel{
+    position:relative; display:block; white-space:nowrap;
+    padding:.12em .5em .2em;
+    font-family:"Neonderthaw", "Caveat", cursive;
+    font-size:clamp(2.1rem, 8.4vw, 3.5rem);
+    line-height:1.12; letter-spacing:.02em; color:var(--on);
+    background:linear-gradient(170deg, #1d121c, #0e0810);
+    border:3px solid #2f1f2c; border-radius:14px;
+    box-shadow:inset 0 0 28px rgba(0,0,0,.8), inset 0 2px 0 rgba(255,255,255,.05), 0 14px 30px rgba(0,0,0,.55);
+    animation:signpower 9s steps(1,end) infinite;
+    overflow:hidden;
+  }
+  .neon::before{                                    /* luz que tira sobre la pared */
+    content:""; position:absolute; inset:-40% -14%; z-index:-1;
+    background:radial-gradient(closest-side, rgba(255,111,142,.30), rgba(255,111,142,0) 72%);
+    opacity:calc(1 - .75 * var(--dust, 1));
+    animation:wallglow 9s steps(1,end) infinite;
+  }
+  .neon .panel::after{                              /* tornillos */
+    content:""; position:absolute; inset:7px; pointer-events:none;
+    background:
+      radial-gradient(circle at 5px 5px, #6a5a62 0 2.2px, transparent 2.8px),
+      radial-gradient(circle at calc(100% - 5px) 5px, #6a5a62 0 2.2px, transparent 2.8px),
+      radial-gradient(circle at 5px calc(100% - 5px), #6a5a62 0 2.2px, transparent 2.8px),
+      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #6a5a62 0 2.2px, transparent 2.8px);
+    background-repeat:no-repeat;
+  }
+  .neon .txt{ display:block; filter:brightness(calc(1 - .25 * var(--dust, 1))); transition:filter .6s ease; }
+  .neon .nl{
+    display:inline-block;
+    color:var(--on);
+    text-shadow:0 0 3px #fff, 0 0 9px #ffc2d0, 0 0 20px var(--glow), 0 0 40px var(--glow), 0 0 74px rgba(255,111,142,.65);
+    animation:hum 3.1s ease-in-out infinite alternate;
+  }
+  .neon .nl.dead{ animation:tubedead 11s steps(1,end) infinite; }
+  .neon .nl.fl{   animation:tubefl 2.6s steps(1,end) infinite; }
+  .neon .nl.long{ animation:tubelong 8s steps(1,end) infinite; }
+  .neon .nl.sp{   animation:tubesp 5.3s steps(1,end) infinite; }
+  .neon .nl.fl2{  animation:tubefl 3.7s steps(1,end) -1.1s infinite; }
+  @keyframes tubedead{
+    0%,100%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    41%{ color:var(--on); text-shadow:0 0 3px #fff, 0 0 12px var(--glow), 0 0 28px var(--glow); }
+    42%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    43%{ color:#a86a80; text-shadow:0 0 8px rgba(255,111,142,.5); }
+    44%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    78%{ color:var(--on); text-shadow:0 0 3px #fff, 0 0 12px var(--glow), 0 0 28px var(--glow); }
+    79%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+  }
+  @keyframes tubefl{
+    0%,100%{ opacity:1; } 8%{ opacity:.25; } 10%{ opacity:1; } 15%{ opacity:.12; } 16%{ opacity:.9; }
+    22%{ opacity:.2; } 60%{ opacity:1; } 63%{ opacity:.3; } 64%{ opacity:1; } 66%{ opacity:.15; } 68%{ opacity:1; }
+  }
+  @keyframes tubelong{
+    0%,100%{ color:var(--on); }
+    48%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    58%{ color:#c98aa0; text-shadow:0 0 8px rgba(255,111,142,.5); }
+    60%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    66%{ color:var(--on); }
+    68%{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
+    71%{ color:var(--on); }
+  }
+  @keyframes tubesp{
+    0%,100%{ opacity:1; } 30%{ opacity:.45; } 31%{ opacity:1; } 72%{ opacity:.3; } 73%{ opacity:.8; } 75%{ opacity:.2; } 77%{ opacity:1; }
+  }
+  @keyframes hum{ from{ opacity:.93; } to{ opacity:1; } }
+  @keyframes signpower{
+    0%,100%{ filter:none; }
+    55%{ filter:brightness(.35); } 56%{ filter:none; } 57%{ filter:brightness(.55); } 58%{ filter:none; }
+    90%{ filter:brightness(.25); } 91.5%{ filter:none; }
+  }
+  @keyframes wallglow{
+    0%,100%{ opacity:1; } 55%{ opacity:.25; } 56%{ opacity:1; } 57%{ opacity:.45; } 58%{ opacity:1; } 90%{ opacity:.15; } 91.5%{ opacity:1; }
+  }
+  .neon .sdust{                                     /* polvo sobre el letrero: se va al limpiar */
+    position:absolute; inset:0; pointer-events:none;
+    opacity:var(--dust, 1); transition:opacity .5s ease;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(150,138,118,.34), transparent 55%),
+      radial-gradient(circle at 80% 75%, rgba(96,84,68,.4), transparent 58%),
+      repeating-linear-gradient(35deg, rgba(210,200,180,.05) 0 2px, transparent 2px 8px),
+      rgba(70,62,52,.14);
+  }
+  .neon .sweb{ position:absolute; width:34%; max-width:130px; aspect-ratio:1; pointer-events:none; opacity:calc(.95 * var(--dust, 1)); transition:opacity .5s ease; }
+  .neon .sweb.tl{ left:0; top:0; }
+  .neon .sweb.br{ right:0; bottom:0; transform:scale(-1,-1); }
+
   @media (prefers-reduced-motion: reduce){
-    .sun, .star, .mote, #hint, #decay, .spider{ animation:none; }
+    .sun, .star, .mote, #hint, #decay, .spider, .neon .panel, .neon::before, .neon .nl{ animation:none; }
+    .neon .nl.dead{ color:var(--off); text-shadow:0 1px 0 rgba(255,255,255,.07); }
     #hint{ opacity:.9; }
   }
 </style>
@@ -246,6 +344,14 @@
 <canvas id="dirt" aria-hidden="true"></canvas>
 <div class="relic" id="relic" aria-hidden="true">
   <div class="ph"><img src="media/fotos/fatguys.jpg" alt=""><div class="dust"></div></div>
+</div>
+<div class="neon" id="neon" aria-hidden="true">
+  <div class="panel">
+    <span class="txt" id="neon-txt"></span>
+    <svg class="sweb tl" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#dfe1e8" stroke-width=".9" stroke-linecap="round" opacity=".7"><path d="M0 0L100 14M0 0L92 44M0 0L68 78M0 0L34 97M0 0L8 100"/><path d="M26 4Q24 20 6 26M50 8Q46 38 10 50M74 11Q66 56 16 74M96 14Q82 74 20 94"/></g></svg>
+    <svg class="sweb br" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#dfe1e8" stroke-width=".9" stroke-linecap="round" opacity=".7"><path d="M0 0L100 14M0 0L92 44M0 0L68 78M0 0L34 97M0 0L8 100"/><path d="M26 4Q24 20 6 26M50 8Q46 38 10 50M74 11Q66 56 16 74M96 14Q82 74 20 94"/></g></svg>
+    <div class="sdust"></div>
+  </div>
 </div>
 <div class="spider" id="spider" aria-hidden="true">
   <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
@@ -280,7 +386,22 @@
   const DONE_AT = 0.85;        /* con 85% limpio se da por terminado (las esquinas exactas no hacen falta) */
   const CLEAN_FLAG = "gracias-dic-limpio";
   const relic = document.getElementById("relic");
-  let relicCells = [];
+  const neon = document.getElementById("neon");
+  const dustEls = [relic, neon];          /* cosas que tienen polvo encima y se limpian al pasar el dedo */
+  let dustCells = [];
+
+  /* el titulo es un letrero de neon malogrado: cada letra es un tubo con su propio fallo */
+  (function neonLetters(){
+    const box = document.getElementById("neon-txt");
+    const text = (document.querySelector(".inner h1") || {}).textContent || "Nuestro Atardecer";
+    const kinds = ["", "dead", "fl", "", "long", "fl2", "sp"];
+    [...text].forEach((ch, i) => {
+      const s = document.createElement("span");
+      s.className = "nl" + (kinds[i % kinds.length] ? " " + kinds[i % kinds.length] : "");
+      s.textContent = ch === " " ? " " : ch;
+      box.appendChild(s);
+    });
+  })();
   let cell, cols, rows, covered, coveredCount, totalCells;
   let finished = false;
 
@@ -291,20 +412,36 @@
     totalCells = cols * rows;
     covered = new Uint8Array(totalCells);
     coveredCount = 0;
-    /* celdas que caen sobre la foto vieja: al limpiarlas se le va el polvo */
-    relicCells = [];
-    const rr = relic.getBoundingClientRect();
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-      const cx = (c + 0.5) * cell, cy = (r + 0.5) * cell;
-      if (cx >= rr.left && cx <= rr.right && cy >= rr.top && cy <= rr.bottom) relicCells.push(r * cols + c);
-    }
+    /* celdas que caen sobre la foto vieja y el letrero: al limpiarlas se les va el polvo */
+    placeSign();
+    dustCells = dustEls.map((el) => {
+      const list = [];
+      const rr = el.getBoundingClientRect();
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const cx = (c + 0.5) * cell, cy = (r + 0.5) * cell;
+        if (cx >= rr.left && cx <= rr.right && cy >= rr.top && cy <= rr.bottom) list.push(r * cols + c);
+      }
+      return list;
+    });
+  }
+
+  /* el letrero se pone justo donde esta el titulo de la escena */
+  function placeSign(){
+    const h = document.querySelector(".inner h1");
+    if (!h) return;
+    const r = h.getBoundingClientRect();
+    neon.style.left = (r.left + r.width / 2) + "px";
+    neon.style.top = (r.top + r.height / 2) + "px";
   }
 
   function updateRelic(){
-    if (!relicCells.length) return;
-    let n = 0;
-    for (const i of relicCells) if (covered[i]) n++;
-    relic.style.setProperty("--dust", Math.max(0, 1 - (n / relicCells.length) * 1.3).toFixed(3));
+    dustEls.forEach((el, k) => {
+      const list = dustCells[k];
+      if (!list || !list.length) return;
+      let n = 0;
+      for (const i of list) if (covered[i]) n++;
+      el.style.setProperty("--dust", Math.max(0, 1 - (n / list.length) * 1.3).toFixed(3));
+    });
   }
 
   function markCoverage(x, y){
@@ -604,6 +741,7 @@
     hideHint();
     dirt.classList.add("fade");
     relic.classList.add("gone");
+    neon.classList.add("gone");
     document.getElementById("spider").classList.add("gone");
     document.getElementById("decay").classList.add("fade");
     document.getElementById("motes").classList.add("fade");
@@ -715,7 +853,8 @@
   buildStars();
   buildMotes();
   rebuild();
-  setTimeout(() => relic.classList.add("in"), 900);     /* la foto vieja aparece entre el polvo */
+  setTimeout(() => { relic.classList.add("in"); neon.classList.add("in"); }, 900);     /* la foto vieja y el letrero aparecen entre el polvo */
+  document.fonts && document.fonts.ready && document.fonts.ready.then(() => rebuild());   /* al cargar la tipografia cambia el tamaño del titulo */
 })();
 </script>
 </body>
