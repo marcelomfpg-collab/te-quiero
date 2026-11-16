@@ -184,6 +184,8 @@
   .spider::before{ content:""; position:absolute; left:50%; bottom:100%; width:1px; height:130vh; margin-left:-.5px; background:rgba(226,228,234,.5); }
   .spider svg{ width:100%; height:100%; display:block; overflow:visible; }
   .spider.gone{ opacity:0; animation:none; transform:translateY(-60vh); }
+  .spider.cut::before{ display:none; }              /* el hilo se corta cuando la tocas */
+  .spider.cut{ animation:none; transition:none; }
   @keyframes dangle{
     0%,100%{ transform:translateY(0) rotate(-4deg); }
     45%{ transform:translateY(70px) rotate(5deg); }
@@ -701,7 +703,47 @@
   function stamp(x, y){
     clean(x, y);
     if (strokes.length < MAX_STROKE_VALUES) strokes.push(x / W, y / H);
+    checkSpider(x, y);
     if (!finished && coveredCount / totalCells >= DONE_AT) finish();
+  }
+
+  /* la arana cuelga de su hilo: si la limpias (la rozas), el hilo se corta y se cae */
+  const spider = document.getElementById("spider");
+  let spiderFell = false;
+  function checkSpider(x, y){
+    if (spiderFell || finished) return;
+    const r = spider.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (Math.hypot(x - cx, y - cy) > R * 0.9 + 16) return;
+    spiderFell = true;
+    const startY = r.top;
+    const dist = Math.max(40, H - startY - r.height - 14);
+    spider.style.top = startY + "px";        /* se congela donde la agarraron */
+    spider.classList.add("cut");
+    const side = cx < W / 2 ? 1 : -1;
+    const fall = spider.animate(
+      [{ transform: "translateY(0) rotate(0deg)" }, { transform: "translateY(" + dist + "px) rotate(" + (side * 420) + "deg)" }],
+      { duration: Math.max(380, Math.min(950, 140 + Math.sqrt(dist) * 28)), easing: "cubic-bezier(.55,0,1,.5)", fill: "forwards" }
+    );
+    fall.onfinish = () => {
+      const bounce = spider.animate(
+        [{ transform: "translateY(" + dist + "px) rotate(" + (side * 420) + "deg)" },
+         { transform: "translateY(" + (dist - 30) + "px) rotate(" + (side * 470) + "deg)", offset: .45 },
+         { transform: "translateY(" + dist + "px) rotate(" + (side * 360) + "deg)" }],
+        { duration: 380, easing: "ease-out", fill: "forwards" }
+      );
+      bounce.onfinish = () => {
+        /* se acomoda patas abajo y sale corriendo a un lado */
+        const run = spider.animate(
+          [{ transform: "translate(0," + dist + "px) rotate(0deg)", opacity: 1 },
+           { transform: "translate(" + (side * W * 0.18) + "px," + (dist - 4) + "px) rotate(" + (side * 4) + "deg)", opacity: 1, offset: .3 },
+           { transform: "translate(" + (side * W * 0.22) + "px," + dist + "px) rotate(0deg)", opacity: 1, offset: .38 },
+           { transform: "translate(" + (side * W * 0.7) + "px," + (dist - 3) + "px) rotate(" + (side * -3) + "deg)", opacity: 0 }],
+          { duration: 1700, easing: "ease-in", fill: "forwards" }
+        );
+        run.onfinish = () => { spider.style.display = "none"; };
+      };
+    };
   }
 
   /* termino de limpiar: queda guardado, se disuelve lo que falta y se vuelve al album */
