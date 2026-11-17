@@ -707,8 +707,9 @@
   .tg-pet.dance .head{ animation:tghead .5s ease-in-out infinite alternate; }
   @keyframes tghead{ from{ transform:translateY(1px) rotate(-6deg); } to{ transform:translateY(-3px) rotate(6deg); } }
   /* en la seccion Adios: se pone triste/sentimental, llora un poquito y "habla" mientras suenan los audios */
-  .tg-pet .frown, .tg-pet .talkm, .tg-pet .brow, .tg-pet .tear{ display:none; }
-  .tg-pet.sad .smile{ display:none; }
+  .tg-pet .frown, .tg-pet .talkm, .tg-pet .brow, .tg-pet .tear, .tg-pet .eye-sad{ display:none; }
+  .tg-pet.sad .smile, .tg-pet.sad .eye{ display:none; }
+  .tg-pet.sad .eye-sad{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
   .tg-pet.sad .frown, .tg-pet.sad .brow, .tg-pet.sad .tear{ display:inline; }
   .tg-pet.sad.talk .frown{ display:none; }
   .tg-pet.sad.talk .talkm{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgtalk .34s ease-in-out infinite alternate; }
@@ -732,7 +733,7 @@
     background:radial-gradient(70% 55% at 50% 82%, rgba(255,170,110,.16), transparent 70%), rgba(6,3,6,.62);
   }
   .adios-title{
-    font-size:clamp(3.4rem, 15vw, 6.4rem); font-weight:700; line-height:1; letter-spacing:.06em; margin:0;
+    font-size:clamp(2.8rem, 12vw, 5.6rem); font-weight:700; line-height:1; letter-spacing:.05em; margin:0;
     animation:adiosIn 1.6s ease both;
   }
   @keyframes adiosIn{ from{ opacity:0; letter-spacing:.3em; } }
@@ -821,9 +822,20 @@
       <g class="eye"><circle cx="60" cy="37" r="8" fill="#fff"/><circle cx="61.5" cy="38" r="4.4" fill="#1d2a12"/><circle cx="63" cy="36" r="1.5" fill="#fff"/></g>
       <ellipse cx="32" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/><ellipse cx="68" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/>
       <path class="smile" d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
-      <path class="frown" d="M42 56 Q50 49 58 56" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
-      <ellipse class="talkm" cx="50" cy="54" rx="5" ry="3.6" fill="#4a6b12"/>
-      <g class="brow" fill="none" stroke="#4a6b12" stroke-width="2.6" stroke-linecap="round"><path d="M30 28 L47 22"/><path d="M70 28 L53 22"/></g>
+      <path class="frown" d="M43 56.5 Q46.5 52.5 50 56 Q53.5 52.5 57 56.5" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse class="talkm" cx="50" cy="54" rx="4.2" ry="3.2" fill="#4a6b12"/>
+      <!-- ojos llorosos (solo en Hasta luego): iris grandes y brillantes, borde de agua abajo -->
+      <g class="eye-sad">
+        <circle cx="40" cy="37" r="9.6" fill="#fff"/><ellipse cx="40.5" cy="38" rx="7.6" ry="8.6" fill="#1f5a55"/><ellipse cx="40.5" cy="39" rx="4.4" ry="5.4" fill="#0b2321"/>
+        <circle cx="37.6" cy="33.8" r="3" fill="#fff"/><circle cx="43.2" cy="41.6" r="1.5" fill="#fff"/><circle cx="44.5" cy="35" r="1" fill="#fff" opacity=".85"/>
+        <path d="M31.8 40.5 Q40 49.5 48.2 40.5 Q40 46 31.8 40.5Z" fill="#a6e2ff" opacity=".8"/>
+      </g>
+      <g class="eye-sad">
+        <circle cx="60" cy="37" r="9.6" fill="#fff"/><ellipse cx="59.5" cy="38" rx="7.6" ry="8.6" fill="#1f5a55"/><ellipse cx="59.5" cy="39" rx="4.4" ry="5.4" fill="#0b2321"/>
+        <circle cx="57.1" cy="33.8" r="3" fill="#fff"/><circle cx="62.7" cy="41.6" r="1.5" fill="#fff"/><circle cx="64" cy="35" r="1" fill="#fff" opacity=".85"/>
+        <path d="M51.8 40.5 Q60 49.5 68.2 40.5 Q60 46 51.8 40.5Z" fill="#a6e2ff" opacity=".8"/>
+      </g>
+      <g class="brow" fill="none" stroke="#3d5a0e" stroke-width="3.2" stroke-linecap="round"><path d="M27 31 Q36 27 47 21"/><path d="M73 31 Q64 27 53 21"/></g>
       <ellipse class="tear t1" cx="32" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
       <ellipse class="tear t2" cx="68" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
     </g>
@@ -844,7 +856,7 @@
     <a class="tab" href="#intro" data-view="intro">Introducción</a>
     <a class="tab" href="#fotos" data-view="fotos">Momentos</a>
     <a class="tab" href="#cancion" data-view="cancion">Canción</a>
-    <a class="tab" href="#adios" data-view="adios">Adiós</a>
+    <a class="tab" href="#adios" data-view="adios">Hasta luego</a>
     <a class="tab back" href="index.html"><span class="lg">← canciones</span><span class="sh" aria-label="Volver a las canciones">←</span></a>
   </div>
 </nav>
@@ -901,8 +913,8 @@
 
 <!-- 4) adios: la tortuga se pone sentimental, se acerca a la pantalla y reproduce los dos audios -->
 <div class="view" id="v-adios">
-<section class="adios" id="adios" aria-label="Adiós">
-  <h2 class="adios-title chalk">ADIÓS</h2>
+<section class="adios" id="adios" aria-label="Hasta luego">
+  <h2 class="adios-title chalk">HASTA LUEGO</h2>
   <p class="adios-sub chalk" id="adios-sub">la tortuga quiere decirte algo…</p>
   <div class="adios-dots" aria-hidden="true"><i id="ad-dot-0"></i><i id="ad-dot-1"></i></div>
   <button class="adios-btn" id="adios-btn" type="button">▶ escuchar</button>
@@ -1881,7 +1893,7 @@ function showView(name){
     if (t.dataset.view === name) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
   });
   window.scrollTo(0, 0);
-  document.title = { intro: "Para ti, Cami", fotos: "Nuestros momentos", cancion: "Una canción para ti", adios: "Adiós" }[name];
+  document.title = { intro: "Para ti, Cami", fotos: "Nuestros momentos", cancion: "Una canción para ti", adios: "Hasta luego" }[name];
 
   /* el video de la introduccion se pausa al irse de su seccion */
   if (prev === "intro" && introVideo) introVideo.pause();
