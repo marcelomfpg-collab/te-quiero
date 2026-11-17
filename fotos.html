@@ -706,6 +706,47 @@
   @keyframes tgfoot{ from{ transform:rotate(-14deg); } to{ transform:rotate(14deg); } }
   .tg-pet.dance .head{ animation:tghead .5s ease-in-out infinite alternate; }
   @keyframes tghead{ from{ transform:translateY(1px) rotate(-6deg); } to{ transform:translateY(-3px) rotate(6deg); } }
+  /* en la seccion Adios: se pone triste/sentimental, llora un poquito y "habla" mientras suenan los audios */
+  .tg-pet .frown, .tg-pet .talkm, .tg-pet .brow, .tg-pet .tear{ display:none; }
+  .tg-pet.sad .smile{ display:none; }
+  .tg-pet.sad .frown, .tg-pet.sad .brow, .tg-pet.sad .tear{ display:inline; }
+  .tg-pet.sad.talk .frown{ display:none; }
+  .tg-pet.sad.talk .talkm{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgtalk .34s ease-in-out infinite alternate; }
+  @keyframes tgtalk{ from{ transform:scaleY(.3); } to{ transform:scaleY(1.1); } }
+  .tg-pet .tear{ transform-box:fill-box; transform-origin:50% 0; animation:tgtear 2.4s ease-in infinite; }
+  .tg-pet .t2{ animation-delay:1.2s; }
+  @keyframes tgtear{ 0%{ opacity:0; transform:translateY(0) scale(.6); } 18%{ opacity:.95; } 100%{ opacity:0; transform:translateY(24px) scale(1); } }
+  .tg-pet.sad .head{ animation:tgsadhead 3.4s ease-in-out infinite; }
+  @keyframes tgsadhead{ 0%,100%{ transform:translateY(2px) rotate(-3deg); } 50%{ transform:translateY(5px) rotate(3deg); } }
+  .tg-pet.sad.hold svg{ animation:tgbreath 3.4s ease-in-out infinite; transform-origin:50% 100%; }
+  @keyframes tgbreath{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.025,.985); } }
+
+  .adios{
+    position:relative; z-index:1;
+    min-height:calc(100vh - 58px); min-height:calc(100svh - 58px);
+    display:flex; flex-direction:column; align-items:center;
+    padding:9vh 18px 0; text-align:center;
+  }
+  .adios::before{                       /* luz tenue: el resto de la pagina baja de volumen */
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:radial-gradient(70% 55% at 50% 82%, rgba(255,170,110,.16), transparent 70%), rgba(6,3,6,.62);
+  }
+  .adios-title{
+    font-size:clamp(3.4rem, 15vw, 6.4rem); font-weight:700; line-height:1; letter-spacing:.06em; margin:0;
+    animation:adiosIn 1.6s ease both;
+  }
+  @keyframes adiosIn{ from{ opacity:0; letter-spacing:.3em; } }
+  .adios-sub{ font-size:1.7rem; margin:14px 0 0; color:#eadfce; min-height:1.3em; }
+  .adios-dots{ display:flex; gap:12px; margin:16px 0 4px; }
+  .adios-dots i{ width:11px; height:11px; border-radius:50%; border:1.5px solid rgba(246,198,103,.7); transition:background .4s, box-shadow .4s; }
+  .adios-dots i.cur{ background:rgba(246,198,103,.45); box-shadow:0 0 12px rgba(246,198,103,.7); }
+  .adios-dots i.done{ background:var(--gold); }
+  .adios-btn{
+    margin-top:10px; padding:9px 22px; border-radius:999px; cursor:pointer;
+    font:600 1rem "Work Sans", system-ui, sans-serif; color:#3a2440;
+    border:0; background:linear-gradient(135deg,#ffd58a,#ff9a5a 55%,#ff6f8e);
+    box-shadow:0 8px 22px -8px rgba(0,0,0,.7);
+  }
   .tg-fx{
     position:fixed; z-index:39; pointer-events:none; line-height:1;
     color:#f2d9a0; text-shadow:0 2px 6px rgba(0,0,0,.6);
@@ -751,6 +792,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
+    .tg-pet .tear, .tg-pet.sad .head, .tg-pet.sad.hold svg, .tg-pet.sad.talk .talkm, .adios-title{ animation:none; }
     .tg-pet .eye, .tg-pet.walk .head, .tg-pet.dance svg, .tg-pet.dance .head, .tg-pet.dance .arm, .tg-pet.dance .leg{ animation:none; }
     .frame, .cinema, .bulb, .cue, .intro .cinema, .vinyl, .vinyl .ic, .view.active, .ly-line.now{ animation:none; }
     .lb-notewrap{ transition:none; }
@@ -778,7 +820,12 @@
       <g class="eye"><circle cx="40" cy="37" r="8" fill="#fff"/><circle cx="41.5" cy="38" r="4.4" fill="#1d2a12"/><circle cx="43" cy="36" r="1.5" fill="#fff"/></g>
       <g class="eye"><circle cx="60" cy="37" r="8" fill="#fff"/><circle cx="61.5" cy="38" r="4.4" fill="#1d2a12"/><circle cx="63" cy="36" r="1.5" fill="#fff"/></g>
       <ellipse cx="32" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/><ellipse cx="68" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/>
-      <path d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
+      <path class="smile" d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
+      <path class="frown" d="M42 56 Q50 49 58 56" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
+      <ellipse class="talkm" cx="50" cy="54" rx="5" ry="3.6" fill="#4a6b12"/>
+      <g class="brow" fill="none" stroke="#4a6b12" stroke-width="2.6" stroke-linecap="round"><path d="M30 28 L47 22"/><path d="M70 28 L53 22"/></g>
+      <ellipse class="tear t1" cx="32" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
+      <ellipse class="tear t2" cx="68" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
     </g>
   </svg>
 </button>
@@ -797,6 +844,7 @@
     <a class="tab" href="#intro" data-view="intro">Introducción</a>
     <a class="tab" href="#fotos" data-view="fotos">Momentos</a>
     <a class="tab" href="#cancion" data-view="cancion">Canción</a>
+    <a class="tab" href="#adios" data-view="adios">Adiós</a>
     <a class="tab back" href="index.html"><span class="lg">← canciones</span><span class="sh" aria-label="Volver a las canciones">←</span></a>
   </div>
 </nav>
@@ -851,6 +899,18 @@
 </section>
 </div>
 
+<!-- 4) adios: la tortuga se pone sentimental, se acerca a la pantalla y reproduce los dos audios -->
+<div class="view" id="v-adios">
+<section class="adios" id="adios" aria-label="Adiós">
+  <h2 class="adios-title chalk">ADIÓS</h2>
+  <p class="adios-sub chalk" id="adios-sub">la tortuga quiere decirte algo…</p>
+  <div class="adios-dots" aria-hidden="true"><i id="ad-dot-0"></i><i id="ad-dot-1"></i></div>
+  <button class="adios-btn" id="adios-btn" type="button">▶ escuchar</button>
+  <audio id="ad-0" preload="auto" src="media/fotos/adios-1.m4a"></audio>
+  <audio id="ad-1" preload="auto" src="media/fotos/adios-2.m4a"></audio>
+</section>
+</div>
+
 <footer>
   <span class="script">siempre estaré contigo</span>
   hecho con <span class="heart">♡</span> para ti
@@ -879,7 +939,7 @@
                poster  → imagen de portada (opcional)
                eyebrow / title / caption → los textos de la sección
    SIGN     → los textos del letrero de pizarra sobre la pared de fotos.
-   PHOTOS   → los recuerdos (ahora 13). Cada uno tiene:
+   PHOTOS   → los recuerdos (ahora 14). Cada uno tiene:
                photos  → (opcional) varias fotos del mismo momento: ["a.jpg","b.jpg"].
                          Al abrir el recuerdo salen numeritos 1 2 3 sobre la foto
                          (o tocas la foto para pasar a la siguiente). src = la portada.
@@ -925,7 +985,7 @@ const SONG = {
 const SIGN = {
   line1: "para ti, Cami",
   title: "Nuestros momentos",
-  line3: "trece recuerdos que quería que vieras"
+  line3: "catorce recuerdos que quería que vieras"
 };
 
 const PHOTOS = [
@@ -941,7 +1001,8 @@ const PHOTOS = [
   { src: "media/fotos/foto-10.jpg", photos: ["media/fotos/foto-10.jpg", "media/fotos/foto-11.jpg"], caption: "", videos: ["media/fotos/video-10a.mp4", "media/fotos/video-10b.mp4", "media/fotos/video-10c.mp4"], poster: "" },
   { src: "media/fotos/foto-12.jpg", caption: "", video: "", poster: "" },
   { src: "media/fotos/foto-13.jpg", caption: "", video: "media/fotos/video-12.mp4", poster: "" },
-  { src: "media/fotos/fatguys.jpg", caption: "", video: "", poster: "" }
+  { src: "media/fotos/fatguys.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-14.jpg", caption: "", video: "", poster: "" }
 ];
 
 /* ------------------------- render (no tocar) ------------------------- */
@@ -1665,6 +1726,10 @@ if (CORREGIR) {
     requestAnimationFrame(frame);
     if (caught) return;
     const dt = Math.min(0.25, (now - last) / 1000); last = now; t += dt;
+    if (inAdios) {                                    /* seccion Adios: quieta frente a la pantalla; mientras habla suelta corazoncitos */
+      if (adTalking && !reduce) { fxT += dt; if (fxT > 0.8) { fxT = 0; heart(); } }
+      return;
+    }
     const wd = wantDance();
     if (wd && !goDance && !dancing) { pick(); mode = "walk"; pet.classList.add("walk"); }     /* empieza la musica: va a bailar */
     if (!wd && (goDance || dancing)) {                                                         /* para la musica o cambia de seccion */
@@ -1696,8 +1761,78 @@ if (CORREGIR) {
   }
   requestAnimationFrame(frame);
 
+  /* ---------- seccion ADIOS: se pone sentimental, se acerca a la pantalla y reproduce los dos audios ---------- */
+  const ads = [document.getElementById("ad-0"), document.getElementById("ad-1")];
+  const adSub = document.getElementById("adios-sub"), adBtn = document.getElementById("adios-btn");
+  const adDots = [document.getElementById("ad-dot-0"), document.getElementById("ad-dot-1")];
+  let inAdios = false, adTalking = false, adIdx = 0, adState = "idle", adTimer = 0, ax = 0, ay = 0, aW = 200;
+  const heart = () => {
+    const s = document.createElement("span");
+    s.className = "tg-fx"; s.textContent = Math.random() < 0.7 ? "♡" : "·";
+    s.style.left = (ax + aW * (0.15 + Math.random() * 0.7)) + "px"; s.style.top = (ay + 6) + "px";
+    s.style.fontSize = (20 + Math.random() * 14) + "px";
+    s.style.setProperty("--dx", (Math.random() * 90 - 45) + "px");
+    document.body.appendChild(s);
+    s.addEventListener("animationend", () => s.remove());
+  };
+  const adTalk = (on) => { adTalking = on; pet.classList.toggle("talk", on); };
+  const adUI = () => {
+    adDots.forEach((d, i) => { d.className = adState === "done" || i < adIdx ? "done" : (i === adIdx && adState !== "idle" ? "cur" : ""); });
+    adBtn.textContent = adState === "playing" ? "❚❚ pausa" : adState === "paused" ? "▶ seguir" : adState === "done" ? "↻ volver a escuchar" : "▶ escuchar";
+    adSub.textContent = adState === "playing" ? "shhh… escucha" : adState === "paused" ? "…" : adState === "done" ? "♡" : "la tortuga quiere decirte algo…";
+  };
+  const adPlace = (animate) => {
+    aW = Math.min(vw() * 0.6, vh() * 0.4, 280); const Hc = aW * 1.4;
+    ax = (vw() - aW) / 2; ay = vh() - Hc - 10;
+    pet.style.transition = animate ? "transform 2.4s cubic-bezier(.22,.9,.28,1)" : "none";
+    pet.style.transform = "translate(" + ax + "px," + ay + "px) scale(" + (aW / W) + ")";
+  };
+  function adPlay(i){
+    adIdx = i; const el = ads[i]; if (!el) return;
+    if (adState !== "paused") el.currentTime = 0;
+    adState = "playing"; adUI(); adTalk(true);
+    const p = el.play();
+    if (p && p.catch) p.catch(() => { adState = "paused"; adTalk(false); adUI(); });   /* si el navegador no la deja sonar sola: queda el boton */
+  }
+  ads.forEach((el, i) => el && el.addEventListener("ended", () => {
+    if (!inAdios) return;
+    adTalk(false);
+    if (i < ads.length - 1) { adIdx = i + 1; adState = "playing"; adUI(); adTimer = setTimeout(() => adPlay(i + 1), 1500); }
+    else { adState = "done"; adIdx = ads.length; adUI(); pet.classList.add("hold"); }
+  }));
+  function adToggle(){
+    if (!inAdios) return;
+    clearTimeout(adTimer);
+    if (adState === "playing") { ads.forEach(a => a && a.pause()); adState = "paused"; adTalk(false); adUI(); }
+    else if (adState === "paused") adPlay(adIdx);
+    else { pet.classList.remove("hold"); adPlay(0); }          /* idle o terminado: desde el principio */
+  }
+  adBtn.addEventListener("click", adToggle);
+  window.tgAdios = {
+    enter(){
+      if (inAdios) return;
+      if (caught) { back.classList.remove("on"); back.setAttribute("aria-hidden", "true"); caught = false; pet.classList.remove("caught"); }
+      inAdios = true; dancing = false; goDance = false; adState = "idle"; adIdx = 0; adUI();
+      pet.classList.remove("dance", "walk", "hold"); pet.classList.add("sad", "walk");      /* camina hacia la pantalla, ya con carita triste */
+      svg.style.transform = "rotate(0deg)";
+      pet.style.transform = "translate(" + x + "px," + y + "px) scale(1)";
+      void pet.offsetWidth;
+      adPlace(true);
+      clearTimeout(adTimer);
+      adTimer = setTimeout(() => { pet.classList.remove("walk"); pet.classList.add("hold"); adPlay(0); }, 2700);
+    },
+    leave(){
+      if (!inAdios) return;
+      inAdios = false; clearTimeout(adTimer); adTalk(false);
+      ads.forEach(a => { if (a) { a.pause(); a.currentTime = 0; } });
+      pet.classList.remove("sad", "talk", "hold", "walk");
+      pet.style.transition = ""; mode = "rest"; wait = 0.3; last = performance.now(); pick(); place(0);
+    }
+  };
+
   /* atrapada: se acerca a la pantalla y suelta la nota */
   pet.addEventListener("click", () => {
+    if (inAdios) { adToggle(); return; }       /* en Adios, tocar a la tortuga pausa / sigue los audios */
     if (caught) { release(); return; }          /* ya atrapada: tocarla la suelta */
     caught = true; dancing = false; goDance = false;
     pet.classList.remove("walk", "dance"); pet.classList.add("caught");
@@ -1724,12 +1859,13 @@ if (CORREGIR) {
   window.addEventListener("resize", () => {
     if (caught) return;
     size(); x = Math.min(x, Math.max(0, vw() - W)); y = Math.min(y, Math.max(0, vh() - H));
+    if (inAdios) { adPlace(false); return; }
     if (dancing) { dancing = false; pet.classList.remove("dance"); mode = "walk"; pet.classList.add("walk"); }
     pick();
   });
 })();
 
-const VIEWS = ["intro", "fotos", "cancion"];
+const VIEWS = ["intro", "fotos", "cancion", "adios"];
 const cue = document.getElementById("cue");
 if (introVideo) introVideo.addEventListener("ended", () => cue.classList.add("hot"));
 let curView = null;
@@ -1745,13 +1881,18 @@ function showView(name){
     if (t.dataset.view === name) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
   });
   window.scrollTo(0, 0);
-  document.title = { intro: "Para ti, Cami", fotos: "Nuestros momentos", cancion: "Una canción para ti" }[name];
+  document.title = { intro: "Para ti, Cami", fotos: "Nuestros momentos", cancion: "Una canción para ti", adios: "Adiós" }[name];
 
   /* el video de la introduccion se pausa al irse de su seccion */
   if (prev === "intro" && introVideo) introVideo.pause();
 
   /* la cancion intenta sonar sola al entrar a su seccion (si el navegador no la deja, queda el disco);
      si ella la pausa a mano no vuelve a empezar sola; si salio y sonaba sola, se pausa */
+  if (prev === "adios" && window.tgAdios) window.tgAdios.leave();
+  if (name === "adios") {                      /* la musica se calla y la tortuga viene a hablar */
+    if (!audio.paused) { audio.pause(); autoStarted = false; }
+    if (window.tgAdios) window.tgAdios.enter();
+  }
   if (name === "cancion") {
     if (!TAPSYNC && !CORREGIR && !userPaused && audio.paused) audio.play().then(() => { autoStarted = true; }).catch(() => {});
   } else if (autoStarted && !audio.paused) {
