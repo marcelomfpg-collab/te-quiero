@@ -1833,6 +1833,7 @@ if (CORREGIR) {
     adIdx = i; const el = ads[i]; if (!el) return;
     if (adState !== "paused") el.currentTime = 0;
     adState = "playing"; adUI(); adTalk(true);
+    if (adSec.classList.contains("final")) { pet.classList.remove("soft"); adVid.pause(); }   /* al volver a escucharla, el mensaje y el video se quedan; solo se calla el video */
     const p = el.play();
     if (p && p.catch) p.catch(() => { adState = "paused"; adTalk(false); adUI(); });   /* si el navegador no la deja sonar sola: queda el boton */
   }
@@ -1845,6 +1846,7 @@ if (CORREGIR) {
   /* terminaron los audios: la tortuga se hace a un lado, aparece el mensaje palabra por palabra y luego el video */
   function adFinal(){
     if (!inAdios || adState !== "done") return;
+    if (adSec.classList.contains("final")) { pet.classList.add("soft"); return; }     /* ya estaba el mensaje: solo vuelve su sonrisa */
     adSmall = true; adPlace(true); pet.classList.add("soft");
     adSec.classList.add("final");
     window.scrollTo(0, 0);
@@ -1867,7 +1869,8 @@ if (CORREGIR) {
     clearTimeout(adTimer);
     if (adState === "playing") { ads.forEach(a => a && a.pause()); adState = "paused"; adTalk(false); adUI(); }
     else if (adState === "paused") adPlay(adIdx);
-    else { adReset(); pet.classList.remove("hold"); adPlay(0); }          /* idle o terminado: desde el principio */
+    else if (adSec.classList.contains("final")) { adVid.classList.add("show"); adPlay(0); }               /* ya vio el mensaje y el video: se vuelve a escuchar a la tortuga y todo lo demas se queda */
+    else { adReset(); pet.classList.remove("hold"); adPlay(0); }          /* idle: desde el principio */
   }
   adBtn.addEventListener("click", adToggle);
   window.tgAdios = {
