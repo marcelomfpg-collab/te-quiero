@@ -748,6 +748,25 @@
     border:0; background:linear-gradient(135deg,#ffd58a,#ff9a5a 55%,#ff6f8e);
     box-shadow:0 8px 22px -8px rgba(0,0,0,.7);
   }
+  /* final: el mensaje aparece palabra por palabra y despues el video */
+  .adios-msg, .adios-vid{ display:none; order:3; }
+  .adios.final .adios-msg{
+    display:block; max-width:560px; margin:20px 0 0; font-size:clamp(1.6rem, 5.2vw, 2.3rem); line-height:1.25; color:#fff6ea;
+    text-shadow:0 0 14px rgba(255,190,130,.35);
+  }
+  .adios-msg .w{ opacity:0; animation:wIn .9s ease forwards; display:inline-block; margin-right:.28em; }
+  @keyframes wIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  .adios.final .adios-vid.show{
+    display:block; order:4; margin:22px 0 0;
+    width:auto; height:auto; max-width:min(86vw, 340px); max-height:54vh;
+    border-radius:8px; background:#000; border:6px solid #2a1b16;
+    box-shadow:0 20px 44px -10px rgba(0,0,0,.85), 0 0 40px rgba(255,170,110,.2);
+    animation:vidIn 1.4s ease both;
+  }
+  @keyframes vidIn{ from{ opacity:0; transform:scale(.94); } }
+  .adios.final .adios-title{ font-size:clamp(1.8rem, 6vw, 2.6rem); opacity:.7; animation:none; }
+  .adios.final .adios-sub, .adios.final .adios-dots{ display:none; }
+  .adios.final .adios-btn{ order:5; margin:20px 0 40px; padding:7px 16px; font-size:.9rem; background:rgba(255,255,255,.12); color:#f3d9c4; box-shadow:none; }
   .tg-fx{
     position:fixed; z-index:39; pointer-events:none; line-height:1;
     color:#f2d9a0; text-shadow:0 2px 6px rgba(0,0,0,.6);
@@ -918,6 +937,8 @@
   <p class="adios-sub chalk" id="adios-sub">la tortuga quiere decirte algo…</p>
   <div class="adios-dots" aria-hidden="true"><i id="ad-dot-0"></i><i id="ad-dot-1"></i></div>
   <button class="adios-btn" id="adios-btn" type="button">▶ escuchar</button>
+  <p class="adios-msg chalk" id="adios-msg" aria-live="polite"></p>
+  <video class="adios-vid" id="adios-vid" playsinline controls preload="metadata" src="media/fotos/hasta-luego.mp4"></video>
   <audio id="ad-0" preload="auto" src="media/fotos/adios-1.m4a"></audio>
   <audio id="ad-1" preload="auto" src="media/fotos/adios-2.m4a"></audio>
 </section>
@@ -951,7 +972,7 @@
                poster  → imagen de portada (opcional)
                eyebrow / title / caption → los textos de la sección
    SIGN     → los textos del letrero de pizarra sobre la pared de fotos.
-   PHOTOS   → los recuerdos (ahora 14). Cada uno tiene:
+   PHOTOS   → los recuerdos (ahora 15). Cada uno tiene:
                photos  → (opcional) varias fotos del mismo momento: ["a.jpg","b.jpg"].
                          Al abrir el recuerdo salen numeritos 1 2 3 sobre la foto
                          (o tocas la foto para pasar a la siguiente). src = la portada.
@@ -997,7 +1018,7 @@ const SONG = {
 const SIGN = {
   line1: "para ti, Cami",
   title: "Nuestros momentos",
-  line3: "catorce recuerdos que quería que vieras"
+  line3: "quince recuerdos que quería que vieras"
 };
 
 const PHOTOS = [
@@ -1014,7 +1035,8 @@ const PHOTOS = [
   { src: "media/fotos/foto-12.jpg", caption: "", video: "", poster: "" },
   { src: "media/fotos/foto-13.jpg", caption: "", video: "media/fotos/video-12.mp4", poster: "" },
   { src: "media/fotos/fatguys.jpg", caption: "", video: "", poster: "" },
-  { src: "media/fotos/foto-14.jpg", caption: "", video: "", poster: "" }
+  { src: "media/fotos/foto-14.jpg", caption: "", video: "", poster: "" },
+  { src: "media/fotos/foto-15.jpg", caption: "", video: "", poster: "" }
 ];
 
 /* ------------------------- render (no tocar) ------------------------- */
@@ -1777,7 +1799,9 @@ if (CORREGIR) {
   const ads = [document.getElementById("ad-0"), document.getElementById("ad-1")];
   const adSub = document.getElementById("adios-sub"), adBtn = document.getElementById("adios-btn");
   const adDots = [document.getElementById("ad-dot-0"), document.getElementById("ad-dot-1")];
-  let inAdios = false, adTalking = false, adIdx = 0, adState = "idle", adTimer = 0, ax = 0, ay = 0, aW = 200;
+  const adSec = document.getElementById("adios"), adMsg = document.getElementById("adios-msg"), adVid = document.getElementById("adios-vid");
+  const AD_MSG = "quiero que sepas que no ha pasado ni un solo día desde ese 11/09 que no haya tenido un tiempito para amarte";
+  let inAdios = false, adTalking = false, adIdx = 0, adState = "idle", adTimer = 0, ax = 0, ay = 0, aW = 200, adSmall = false;
   const heart = () => {
     const s = document.createElement("span");
     s.className = "tg-fx"; s.textContent = Math.random() < 0.7 ? "♡" : "·";
@@ -1794,8 +1818,8 @@ if (CORREGIR) {
     adSub.textContent = adState === "playing" ? "shhh… escucha" : adState === "paused" ? "…" : adState === "done" ? "♡" : "la tortuga quiere decirte algo…";
   };
   const adPlace = (animate) => {
-    aW = Math.min(vw() * 0.6, vh() * 0.4, 280); const Hc = aW * 1.4;
-    ax = (vw() - aW) / 2; ay = vh() - Hc - 10;
+    aW = adSmall ? Math.min(vw() * 0.2, 100) : Math.min(vw() * 0.6, vh() * 0.4, 280); const Hc = aW * 1.4;
+    ax = adSmall ? 10 : (vw() - aW) / 2; ay = vh() - Hc - 10;
     pet.style.transition = animate ? "transform 2.4s cubic-bezier(.22,.9,.28,1)" : "none";
     pet.style.transform = "translate(" + ax + "px," + ay + "px) scale(" + (aW / W) + ")";
   };
@@ -1810,20 +1834,41 @@ if (CORREGIR) {
     if (!inAdios) return;
     adTalk(false);
     if (i < ads.length - 1) { adIdx = i + 1; adState = "playing"; adUI(); adTimer = setTimeout(() => adPlay(i + 1), 1500); }
-    else { adState = "done"; adIdx = ads.length; adUI(); pet.classList.add("hold"); }
+    else { adState = "done"; adIdx = ads.length; adUI(); pet.classList.add("hold"); adTimer = setTimeout(adFinal, 1500); }
   }));
+  /* terminaron los audios: la tortuga se hace a un lado, aparece el mensaje palabra por palabra y luego el video */
+  function adFinal(){
+    if (!inAdios || adState !== "done") return;
+    adSmall = true; adPlace(true);
+    adSec.classList.add("final");
+    window.scrollTo(0, 0);
+    const words = AD_MSG.split(" ");
+    adMsg.textContent = "";
+    words.forEach((w, i) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w; s.style.animationDelay = (0.5 + i * 0.28) + "s"; adMsg.appendChild(s); });
+    adTimer = setTimeout(() => {
+      if (!inAdios || adState !== "done") return;
+      adVid.classList.add("show");
+      const p = adVid.play(); if (p && p.catch) p.catch(() => {});          /* si no la deja sonar sola: tiene controles */
+    }, 500 + words.length * 280 + 2600);
+  }
+  function adReset(){
+    clearTimeout(adTimer);
+    adSec.classList.remove("final"); adVid.classList.remove("show"); adVid.pause(); adMsg.textContent = "";
+    if (adSmall) { adSmall = false; if (inAdios) adPlace(true); }
+  }
   function adToggle(){
     if (!inAdios) return;
     clearTimeout(adTimer);
     if (adState === "playing") { ads.forEach(a => a && a.pause()); adState = "paused"; adTalk(false); adUI(); }
     else if (adState === "paused") adPlay(adIdx);
-    else { pet.classList.remove("hold"); adPlay(0); }          /* idle o terminado: desde el principio */
+    else { adReset(); pet.classList.remove("hold"); adPlay(0); }          /* idle o terminado: desde el principio */
   }
   adBtn.addEventListener("click", adToggle);
   window.tgAdios = {
     enter(){
       if (inAdios) return;
       if (caught) { back.classList.remove("on"); back.setAttribute("aria-hidden", "true"); caught = false; pet.classList.remove("caught"); }
+      adReset(); adSmall = false;
       inAdios = true; dancing = false; goDance = false; adState = "idle"; adIdx = 0; adUI();
       pet.classList.remove("dance", "walk", "hold"); pet.classList.add("sad", "walk");      /* camina hacia la pantalla, ya con carita triste */
       svg.style.transform = "rotate(0deg)";
@@ -1835,7 +1880,7 @@ if (CORREGIR) {
     },
     leave(){
       if (!inAdios) return;
-      inAdios = false; clearTimeout(adTimer); adTalk(false);
+      inAdios = false; adSmall = false; adReset(); adTalk(false);
       ads.forEach(a => { if (a) { a.pause(); a.currentTime = 0; } });
       pet.classList.remove("sad", "talk", "hold", "walk");
       pet.style.transition = ""; mode = "rest"; wait = 0.3; last = performance.now(); pick(); place(0);
