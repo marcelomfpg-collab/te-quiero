@@ -711,12 +711,17 @@
   .tg-pet.sad .smile, .tg-pet.sad .eye{ display:none; }
   .tg-pet.sad .eye-sad{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
   .tg-pet.sad .frown, .tg-pet.sad .brow, .tg-pet.sad .tear{ display:inline; }
-  .tg-pet.sad.talk .frown{ display:none; }
   /* llora de felicidad: sonrisota, cejas arqueadas hacia arriba, mejillas muy rosadas y lagrimas corriendo */
-  .tg-pet .softm, .tg-pet .brow-soft{ display:none; }
+  .tg-pet .softm, .tg-pet .brow-soft, .tg-pet .talkm, .tg-pet .cmouth, .tg-pet .cbrow{ display:none; }
   .tg-pet.sad .blush{ opacity:.95; }
-  .tg-pet.sad.talk .talkm{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgtalk .34s ease-in-out infinite alternate; }
-  @keyframes tgtalk{ from{ transform:scaleY(.3); } to{ transform:scaleY(1.1); } }
+  /* mientras suenan los audios: llanto de "necesito que escuches esto" (sin hablar): cejas torcidas, dientes apretados, sollozos */
+  .tg-pet.sad.cry .frown, .tg-pet.sad.cry .brow{ display:none; }
+  .tg-pet.sad.cry .cmouth, .tg-pet.sad.cry .cbrow{ display:inline; }
+  .tg-pet.sad.cry .cmouth{ transform-box:fill-box; transform-origin:50% 50%; animation:tgwob .36s ease-in-out infinite alternate; }
+  @keyframes tgwob{ from{ transform:scale(1,.88) translateY(.6px); } to{ transform:scale(1.04,1.08); } }
+  .tg-pet.sad.cry .tear{ animation-duration:1.05s; }
+  .tg-pet.sad.cry svg, .tg-pet.sad.cry.hold svg{ animation:tgsob .62s ease-in-out infinite; transform-origin:50% 100%; }
+  @keyframes tgsob{ 0%,100%{ transform:translateY(0) rotate(-1deg); } 20%{ transform:translateY(-3px) rotate(0deg) scale(1.01,1.02); } 40%{ transform:translateY(1px) rotate(1deg); } 60%{ transform:translateY(-2px) rotate(0deg); } 80%{ transform:translateY(1px) rotate(-1.2deg); } }
   .tg-pet .tear{ transform-box:fill-box; transform-origin:50% 0; animation:tgtear 1.7s ease-in infinite; }
   .tg-pet .t2{ animation-delay:.85s; }
   .tg-pet .t3{ animation-delay:.4s; }
@@ -847,7 +852,8 @@
       <ellipse class="blush" cx="31" cy="49" rx="5.5" ry="3.6" fill="#ff8fa3" opacity=".55"/><ellipse class="blush" cx="69" cy="49" rx="5.5" ry="3.6" fill="#ff8fa3" opacity=".55"/>
       <path class="smile" d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
       <path class="frown" d="M40.5 51.5 Q50 53.5 59.5 51.5 Q58 63.5 50 63.5 Q42 63.5 40.5 51.5Z" fill="#8a3446" stroke="#4a6b12" stroke-width="2" stroke-linejoin="round"/>
-      <ellipse class="talkm" cx="50" cy="57" rx="7" ry="5.4" fill="#8a3446" stroke="#4a6b12" stroke-width="1.8"/>
+      <g class="cmouth"><path d="M38.5 59 Q50 49 61.5 59 Q59 66.5 50 66 Q41 66.5 38.5 59Z" fill="#f6f1e2" stroke="#4a6b12" stroke-width="2" stroke-linejoin="round"/><path d="M40.5 58.8 H59.5 M45.5 55.2 V63.5 M50 54 V65 M54.5 55.2 V63.5" stroke="#b9b49c" stroke-width="1.2" fill="none"/></g>
+      <g class="cbrow" fill="none" stroke="#3d5a0e" stroke-width="3.6" stroke-linecap="round"><path d="M25 34 Q36 29 47 20.5"/><path d="M75 34 Q64 29 53 20.5"/></g>
       <path class="softm" d="M43.5 53 Q50 58 56.5 53" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round"/>
       <g class="brow-soft" fill="none" stroke="#3d5a0e" stroke-width="2.8" stroke-linecap="round"><path d="M28 29 Q37 26 46 23.5"/><path d="M72 29 Q63 26 54 23.5"/></g>
       <!-- ojos llorosos (solo en Hasta luego): iris grandes y brillantes, borde de agua abajo -->
@@ -1824,7 +1830,7 @@ if (CORREGIR) {
   const adUI = () => {
     adDots.forEach((d, i) => { d.className = adState === "done" || i < adIdx ? "done" : (i === adIdx && adState !== "idle" ? "cur" : ""); });
     adBtn.textContent = adState === "playing" ? "❚❚ pausa" : adState === "paused" ? "▶ seguir" : adState === "done" ? "↻ volver a escuchar" : "▶ escuchar";
-    adSub.textContent = adState === "playing" ? "shhh… escucha" : adState === "paused" ? "…" : adState === "done" ? "♡" : "la tortuga quiere decirte algo…";
+    adSub.textContent = adState === "idle" ? "la tortuga quiere decirte algo…" : "";
   };
   const adPlace = (animate) => {
     aW = adSmall ? Math.min(vw() * 0.2, 100) : Math.min(vw() * 0.6, vh() * 0.4, 280); const Hc = aW * 1.4;
@@ -1836,7 +1842,8 @@ if (CORREGIR) {
     adIdx = i; const el = ads[i]; if (!el) return;
     if (adState !== "paused") el.currentTime = 0;
     adState = "playing"; adUI(); adTalk(true);
-    if (adSec.classList.contains("final")) { pet.classList.remove("soft"); adVid.pause(); }   /* al volver a escucharla, el mensaje y el video se quedan; solo se calla el video */
+    pet.classList.remove("soft"); pet.classList.add("cry");
+    if (adSec.classList.contains("final")) adVid.pause();   /* al volver a escucharla, el mensaje y el video se quedan; solo se calla el video */
     const p = el.play();
     if (p && p.catch) p.catch(() => { adState = "paused"; adTalk(false); adUI(); });   /* si el navegador no la deja sonar sola: queda el boton */
   }
@@ -1849,8 +1856,8 @@ if (CORREGIR) {
   /* terminaron los audios: la tortuga se hace a un lado, aparece el mensaje palabra por palabra y luego el video */
   function adFinal(){
     if (!inAdios || adState !== "done") return;
-    if (adSec.classList.contains("final")) { pet.classList.add("soft"); return; }     /* ya estaba el mensaje: solo vuelve su sonrisa */
-    adSmall = true; adPlace(true); pet.classList.add("soft");
+    if (adSec.classList.contains("final")) { pet.classList.remove("cry"); pet.classList.add("soft"); return; }     /* ya estaba el mensaje: solo vuelve su sonrisa */
+    adSmall = true; adPlace(true); pet.classList.remove("cry"); pet.classList.add("soft");     /* se le pasa el llanto: queda llorando de felicidad */
     adSec.classList.add("final");
     window.scrollTo(0, 0);
     const words = AD_MSG.split(" ");
@@ -1882,7 +1889,7 @@ if (CORREGIR) {
       if (caught) { back.classList.remove("on"); back.setAttribute("aria-hidden", "true"); caught = false; pet.classList.remove("caught"); }
       adReset(); adSmall = false;
       inAdios = true; dancing = false; goDance = false; adState = "idle"; adIdx = 0; adUI();
-      pet.classList.remove("dance", "walk", "hold"); pet.classList.add("sad", "walk");      /* camina hacia la pantalla, ya con carita triste */
+      pet.classList.remove("dance", "walk", "hold", "soft"); pet.classList.add("sad", "walk", "cry");      /* camina hacia la pantalla, ya con carita triste */
       svg.style.transform = "rotate(0deg)";
       pet.style.transform = "translate(" + x + "px," + y + "px) scale(1)";
       void pet.offsetWidth;
@@ -1894,7 +1901,7 @@ if (CORREGIR) {
       if (!inAdios) return;
       inAdios = false; adSmall = false; adReset(); adTalk(false);
       ads.forEach(a => { if (a) { a.pause(); a.currentTime = 0; } });
-      pet.classList.remove("sad", "talk", "hold", "walk", "soft");
+      pet.classList.remove("sad", "talk", "hold", "walk", "soft", "cry");
       pet.style.transition = ""; mode = "rest"; wait = 0.3; last = performance.now(); pick(); place(0);
     }
   };
