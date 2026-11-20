@@ -712,6 +712,10 @@
   .tg-pet.sad .eye-sad{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
   .tg-pet.sad .frown, .tg-pet.sad .brow, .tg-pet.sad .tear{ display:inline; }
   .tg-pet.sad.talk .frown{ display:none; }
+  /* al final: sigue con los ojitos llorosos, pero con una sonrisa tenue y las cejas mas suaves */
+  .tg-pet .softm, .tg-pet .brow-soft{ display:none; }
+  .tg-pet.sad.soft .frown, .tg-pet.sad.soft .brow{ display:none; }
+  .tg-pet.sad.soft .softm, .tg-pet.sad.soft .brow-soft{ display:inline; }
   .tg-pet.sad.talk .talkm{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgtalk .34s ease-in-out infinite alternate; }
   @keyframes tgtalk{ from{ transform:scaleY(.3); } to{ transform:scaleY(1.1); } }
   .tg-pet .tear{ transform-box:fill-box; transform-origin:50% 0; animation:tgtear 2.4s ease-in infinite; }
@@ -843,6 +847,8 @@
       <path class="smile" d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
       <path class="frown" d="M43 56.5 Q46.5 52.5 50 56 Q53.5 52.5 57 56.5" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
       <ellipse class="talkm" cx="50" cy="54" rx="4.2" ry="3.2" fill="#4a6b12"/>
+      <path class="softm" d="M43.5 53 Q50 58 56.5 53" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round"/>
+      <g class="brow-soft" fill="none" stroke="#3d5a0e" stroke-width="2.8" stroke-linecap="round"><path d="M28 29 Q37 26 46 23.5"/><path d="M72 29 Q63 26 54 23.5"/></g>
       <!-- ojos llorosos (solo en Hasta luego): iris grandes y brillantes, borde de agua abajo -->
       <g class="eye-sad">
         <circle cx="40" cy="37" r="9.6" fill="#fff"/><ellipse cx="40.5" cy="38" rx="7.6" ry="8.6" fill="#1f5a55"/><ellipse cx="40.5" cy="39" rx="4.4" ry="5.4" fill="#0b2321"/>
@@ -1839,7 +1845,7 @@ if (CORREGIR) {
   /* terminaron los audios: la tortuga se hace a un lado, aparece el mensaje palabra por palabra y luego el video */
   function adFinal(){
     if (!inAdios || adState !== "done") return;
-    adSmall = true; adPlace(true);
+    adSmall = true; adPlace(true); pet.classList.add("soft");
     adSec.classList.add("final");
     window.scrollTo(0, 0);
     const words = AD_MSG.split(" ");
@@ -1853,7 +1859,7 @@ if (CORREGIR) {
   }
   function adReset(){
     clearTimeout(adTimer);
-    adSec.classList.remove("final"); adVid.classList.remove("show"); adVid.pause(); adMsg.textContent = "";
+    pet.classList.remove("soft"); adSec.classList.remove("final"); adVid.classList.remove("show"); adVid.pause(); adMsg.textContent = "";
     if (adSmall) { adSmall = false; if (inAdios) adPlace(true); }
   }
   function adToggle(){
@@ -1882,7 +1888,7 @@ if (CORREGIR) {
       if (!inAdios) return;
       inAdios = false; adSmall = false; adReset(); adTalk(false);
       ads.forEach(a => { if (a) { a.pause(); a.currentTime = 0; } });
-      pet.classList.remove("sad", "talk", "hold", "walk");
+      pet.classList.remove("sad", "talk", "hold", "walk", "soft");
       pet.style.transition = ""; mode = "rest"; wait = 0.3; last = performance.now(); pick(); place(0);
     }
   };
