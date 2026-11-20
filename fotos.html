@@ -712,15 +712,16 @@
   .tg-pet.sad .eye-sad{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgblink 4.6s infinite; }
   .tg-pet.sad .frown, .tg-pet.sad .brow, .tg-pet.sad .tear{ display:inline; }
   .tg-pet.sad.talk .frown{ display:none; }
-  /* al final: sigue con los ojitos llorosos, pero con una sonrisa tenue y las cejas mas suaves */
+  /* llora de felicidad: sonrisota, cejas arqueadas hacia arriba, mejillas muy rosadas y lagrimas corriendo */
   .tg-pet .softm, .tg-pet .brow-soft{ display:none; }
-  .tg-pet.sad.soft .frown, .tg-pet.sad.soft .brow{ display:none; }
-  .tg-pet.sad.soft .softm, .tg-pet.sad.soft .brow-soft{ display:inline; }
+  .tg-pet.sad .blush{ opacity:.95; }
   .tg-pet.sad.talk .talkm{ display:inline; transform-box:fill-box; transform-origin:50% 50%; animation:tgtalk .34s ease-in-out infinite alternate; }
   @keyframes tgtalk{ from{ transform:scaleY(.3); } to{ transform:scaleY(1.1); } }
-  .tg-pet .tear{ transform-box:fill-box; transform-origin:50% 0; animation:tgtear 2.4s ease-in infinite; }
-  .tg-pet .t2{ animation-delay:1.2s; }
-  @keyframes tgtear{ 0%{ opacity:0; transform:translateY(0) scale(.6); } 18%{ opacity:.95; } 100%{ opacity:0; transform:translateY(24px) scale(1); } }
+  .tg-pet .tear{ transform-box:fill-box; transform-origin:50% 0; animation:tgtear 1.7s ease-in infinite; }
+  .tg-pet .t2{ animation-delay:.85s; }
+  .tg-pet .t3{ animation-delay:.4s; }
+  .tg-pet .t4{ animation-delay:1.25s; }
+  @keyframes tgtear{ 0%{ opacity:0; transform:translateY(0) scale(.6); } 18%{ opacity:.95; } 100%{ opacity:0; transform:translateY(30px) scale(1.1); } }
   .tg-pet.sad .head{ animation:tgsadhead 3.4s ease-in-out infinite; }
   @keyframes tgsadhead{ 0%,100%{ transform:translateY(2px) rotate(-3deg); } 50%{ transform:translateY(5px) rotate(3deg); } }
   .tg-pet.sad.hold svg{ animation:tgbreath 3.4s ease-in-out infinite; transform-origin:50% 100%; }
@@ -843,10 +844,10 @@
       <circle cx="50" cy="40" r="26" fill="#c3e756"/>
       <g class="eye"><circle cx="40" cy="37" r="8" fill="#fff"/><circle cx="41.5" cy="38" r="4.4" fill="#1d2a12"/><circle cx="43" cy="36" r="1.5" fill="#fff"/></g>
       <g class="eye"><circle cx="60" cy="37" r="8" fill="#fff"/><circle cx="61.5" cy="38" r="4.4" fill="#1d2a12"/><circle cx="63" cy="36" r="1.5" fill="#fff"/></g>
-      <ellipse cx="32" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/><ellipse cx="68" cy="49" rx="4.5" ry="3" fill="#ff9aa8" opacity=".55"/>
+      <ellipse class="blush" cx="31" cy="49" rx="5.5" ry="3.6" fill="#ff8fa3" opacity=".55"/><ellipse class="blush" cx="69" cy="49" rx="5.5" ry="3.6" fill="#ff8fa3" opacity=".55"/>
       <path class="smile" d="M42 51 Q50 59 58 51" fill="none" stroke="#4a6b12" stroke-width="2.4" stroke-linecap="round"/>
-      <path class="frown" d="M43 56.5 Q46.5 52.5 50 56 Q53.5 52.5 57 56.5" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-      <ellipse class="talkm" cx="50" cy="54" rx="4.2" ry="3.2" fill="#4a6b12"/>
+      <path class="frown" d="M40.5 51.5 Q50 53.5 59.5 51.5 Q58 63.5 50 63.5 Q42 63.5 40.5 51.5Z" fill="#8a3446" stroke="#4a6b12" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse class="talkm" cx="50" cy="57" rx="7" ry="5.4" fill="#8a3446" stroke="#4a6b12" stroke-width="1.8"/>
       <path class="softm" d="M43.5 53 Q50 58 56.5 53" fill="none" stroke="#4a6b12" stroke-width="2.3" stroke-linecap="round"/>
       <g class="brow-soft" fill="none" stroke="#3d5a0e" stroke-width="2.8" stroke-linecap="round"><path d="M28 29 Q37 26 46 23.5"/><path d="M72 29 Q63 26 54 23.5"/></g>
       <!-- ojos llorosos (solo en Hasta luego): iris grandes y brillantes, borde de agua abajo -->
@@ -860,9 +861,11 @@
         <circle cx="57.1" cy="33.8" r="3" fill="#fff"/><circle cx="62.7" cy="41.6" r="1.5" fill="#fff"/><circle cx="64" cy="35" r="1" fill="#fff" opacity=".85"/>
         <path d="M51.8 40.5 Q60 49.5 68.2 40.5 Q60 46 51.8 40.5Z" fill="#a6e2ff" opacity=".8"/>
       </g>
-      <g class="brow" fill="none" stroke="#3d5a0e" stroke-width="3.2" stroke-linecap="round"><path d="M27 31 Q36 27 47 21"/><path d="M73 31 Q64 27 53 21"/></g>
-      <ellipse class="tear t1" cx="32" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
-      <ellipse class="tear t2" cx="68" cy="47" rx="2.6" ry="3.8" fill="#8fd3ff"/>
+      <g class="brow" fill="none" stroke="#3d5a0e" stroke-width="3" stroke-linecap="round"><path d="M28 26 Q37 18.5 47 23.5"/><path d="M72 26 Q63 18.5 53 23.5"/></g>
+      <ellipse class="tear t1" cx="31.5" cy="47" rx="2.8" ry="4.2" fill="#8fd3ff"/>
+      <ellipse class="tear t2" cx="68.5" cy="47" rx="2.8" ry="4.2" fill="#8fd3ff"/>
+      <ellipse class="tear t3" cx="36" cy="49" rx="2.2" ry="3.4" fill="#b4e4ff"/>
+      <ellipse class="tear t4" cx="64" cy="49" rx="2.2" ry="3.4" fill="#b4e4ff"/>
     </g>
   </svg>
 </button>
