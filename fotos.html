@@ -944,9 +944,10 @@
   <div class="adios-dots" aria-hidden="true"><i id="ad-dot-0"></i><i id="ad-dot-1"></i></div>
   <button class="adios-btn" id="adios-btn" type="button">▶ escuchar</button>
   <p class="adios-msg chalk" id="adios-msg" aria-live="polite"></p>
-  <video class="adios-vid" id="adios-vid" playsinline controls preload="metadata" src="media/fotos/hasta-luego.mp4"></video>
-  <audio id="ad-0" preload="auto" src="media/fotos/adios-1.m4a"></audio>
-  <audio id="ad-1" preload="auto" src="media/fotos/adios-2.m4a"></audio>
+  <video class="adios-vid" id="adios-vid" playsinline controls preload="auto" src="media/fotos/hasta-luego.mp4"></video>
+  <audio id="ad-0" preload="auto" src="media/fotos/adios-1.m4a?v=2"></audio>
+  <audio id="ad-1" preload="auto" src="media/fotos/adios-2.m4a?v=2"></audio>
+  <audio id="ad-music" preload="auto" src="media/fotos/fondo-adios.mp3"></audio>
 </section>
 </div>
 
@@ -1382,7 +1383,8 @@ bar.addEventListener("keydown", (e) => {
 
 /* solo suena una cosa a la vez: si empieza un video o la cancion, lo demas se pausa */
 document.addEventListener("play", (e) => {
-  document.querySelectorAll("video, audio").forEach(m => { if (m !== e.target && !m.paused) m.pause(); });
+  const grp = (el) => /^ad-/.test(el.id || "");            /* en Hasta luego la musica de fondo y la voz de la tortuga suenan juntas */
+  document.querySelectorAll("video, audio").forEach(m => { if (m !== e.target && !m.paused && !(grp(m) && grp(e.target))) m.pause(); });
 }, true);
 
 /* ---------- letra traducida: cada linea aparece sola en su minuto ---------- */
@@ -1830,9 +1832,31 @@ if (CORREGIR) {
     pet.style.transition = animate ? "transform 2.4s cubic-bezier(.22,.9,.28,1)" : "none";
     pet.style.transform = "translate(" + ax + "px," + ay + "px) scale(" + (aW / W) + ")";
   };
+  /* musica de fondo (Rauw Alejandro): suena bajita mientras la tortuga "habla" y se apaga justo cuando ella termina */
+  const mus = document.getElementById("ad-music"), MUS_VOL = 0.2;
+  let musT = 0;
+  const musFade = (to, ms, done) => {
+    if (!mus) return; clearInterval(musT);
+    const from = mus.volume, t0 = performance.now();
+    musT = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
+      mus.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if (k >= 1) { clearInterval(musT); if (done) done(); }
+    }, 40);
+  };
+  const musStart = (fresh) => {
+    if (!mus) return;
+    clearInterval(musT);
+    if (fresh) { try { mus.currentTime = 0; } catch (e) {} mus.volume = 0; }
+    const p = mus.play(); if (p && p.catch) p.catch(() => {});
+    musFade(MUS_VOL, fresh ? 1800 : 300);
+  };
+  const musStop = (ms) => { if (!mus) return; if (!ms) { clearInterval(musT); mus.pause(); return; } musFade(0, ms, () => mus.pause()); };
   function adPlay(i){
     adIdx = i; const el = ads[i]; if (!el) return;
-    if (adState !== "paused") el.currentTime = 0;
+    const resuming = adState === "paused";
+    if (!resuming) el.currentTime = 0;
+    if (resuming) musStart(false); else if (i === 0) musStart(true);
     adState = "playing"; adUI(); adTalk(true);
     pet.classList.remove("soft"); pet.classList.add("cry");
     if (adSec.classList.contains("final")) adVid.pause();   /* al volver a escucharla, el mensaje y el video se quedan; solo se calla el video */
@@ -1842,8 +1866,8 @@ if (CORREGIR) {
   ads.forEach((el, i) => el && el.addEventListener("ended", () => {
     if (!inAdios) return;
     adTalk(false);
-    if (i < ads.length - 1) { adIdx = i + 1; adState = "playing"; adUI(); adTimer = setTimeout(() => adPlay(i + 1), 1500); }
-    else { adState = "done"; adIdx = ads.length; adUI(); pet.classList.add("hold"); adTimer = setTimeout(adFinal, 1500); }
+    if (i < ads.length - 1) { adIdx = i + 1; adState = "playing"; adUI(); adTimer = setTimeout(() => adPlay(i + 1), 1000); }
+    else { adState = "done"; adIdx = ads.length; adUI(); pet.classList.add("hold"); musStop(700); adTimer = setTimeout(adFinal, 450); }   /* ella termina: la musica se corta y sale el mensaje enseguida */
   }));
   /* terminaron los audios: la tortuga se hace a un lado, aparece el mensaje palabra por palabra y luego el video */
   function adFinal(){
@@ -1854,22 +1878,23 @@ if (CORREGIR) {
     window.scrollTo(0, 0);
     const words = AD_MSG.split(" ");
     adMsg.textContent = "";
-    words.forEach((w, i) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w; s.style.animationDelay = (0.5 + i * 0.28) + "s"; adMsg.appendChild(s); });
+    words.forEach((w, i) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w; s.style.animationDelay = (0.1 + i * 0.1) + "s"; adMsg.appendChild(s); });
     adTimer = setTimeout(() => {
       if (!inAdios || adState !== "done") return;
       adVid.classList.add("show");
       const p = adVid.play(); if (p && p.catch) p.catch(() => {});          /* si no la deja sonar sola: tiene controles */
-    }, 500 + words.length * 280 + 2600);
+    }, 1700);
   }
   function adReset(){
     clearTimeout(adTimer);
+    musStop(0);
     pet.classList.remove("soft"); adSec.classList.remove("final"); adVid.classList.remove("show"); adVid.pause(); adMsg.textContent = "";
     if (adSmall) { adSmall = false; if (inAdios) adPlace(true); }
   }
   function adToggle(){
     if (!inAdios) return;
     clearTimeout(adTimer);
-    if (adState === "playing") { ads.forEach(a => a && a.pause()); adState = "paused"; adTalk(false); adUI(); }
+    if (adState === "playing") { ads.forEach(a => a && a.pause()); musStop(0); adState = "paused"; adTalk(false); adUI(); }
     else if (adState === "paused") adPlay(adIdx);
     else if (adSec.classList.contains("final")) { adVid.classList.add("show"); adPlay(0); }               /* ya vio el mensaje y el video: se vuelve a escuchar a la tortuga y todo lo demas se queda */
     else { adReset(); pet.classList.remove("hold"); adPlay(0); }          /* idle: desde el principio */
