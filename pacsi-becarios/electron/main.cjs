@@ -1,6 +1,7 @@
 // Programa de escritorio: abre la app en una ventana propia, sin navegador.
 // Agrega lo que el navegador no puede hacer: conectarse al correo y leer CVs escaneados sin internet.
-const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, session } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const mail = require('./mail.cjs');
@@ -67,8 +68,26 @@ app.on('second-instance', () => {
   }
 });
 
+/** "Descargas/nombre.csv"; si ya existe, "nombre (2).csv". */
+function uniqueDownloadPath(filename) {
+  const dir = app.getPath('downloads');
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  let candidate = path.join(dir, filename);
+  for (let i = 2; fs.existsSync(candidate); i++) candidate = path.join(dir, `${base} (${i})${ext}`);
+  return candidate;
+}
+
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+  // Excel, plantilla y copias de seguridad se guardan directo en Descargas y se muestra el archivo.
+  session.defaultSession.on('will-download', (_event, item) => {
+    const target = uniqueDownloadPath(item.getFilename());
+    item.setSavePath(target);
+    item.once('done', (_e, state) => {
+      if (state === 'completed') shell.showItemInFolder(target);
+    });
+  });
   createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });

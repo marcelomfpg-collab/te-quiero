@@ -9,17 +9,27 @@ interface DialogProps {
   header?: ReactNode;
 }
 
+/** Ventanas abiertas, de abajo hacia arriba: Escape cierra solo la de arriba. */
+const openDialogs: symbol[] = [];
+
 /** Contenedor modal accesible (Escape para cerrar, foco inicial y devolución del foco). */
 export function Dialog({ title, eyebrow, variant = 'modal', onClose, children, header }: DialogProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    const id = Symbol('dialog');
+    openDialogs.push(id);
     closeRef.current?.focus();
-    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || openDialogs[openDialogs.length - 1] !== id) return;
+      e.stopImmediatePropagation();
+      onClose();
+    };
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
+      openDialogs.splice(openDialogs.indexOf(id), 1);
       previouslyFocused?.focus();
     };
   }, [onClose]);
