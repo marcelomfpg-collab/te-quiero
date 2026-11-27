@@ -16,5 +16,7 @@ contextBridge.exposeInMainWorld('pacsiDesktop', {
     list: () => ipcRenderer.invoke('mail:list'),
     get: (uid) => ipcRenderer.invoke('mail:get', uid),
     close: () => ipcRenderer.invoke('mail:close'),
+    msLogin: (config) => ipcRenderer.invoke('mail:msLogin', config),
+    msLogout: () => ipcRenderer.invoke('mail:msLogout'),
   },
 });

@@ -83,7 +83,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   const [mailConfig, setMailConfig] = useState<{ autoCheckMinutes: number } | null>(null);
 
   const refreshMailConfig = useCallback(() => {
-    void window.pacsiDesktop?.mail.getConfig().then((c) => setMailConfig(c && c.hasPassword ? { autoCheckMinutes: c.autoCheckMinutes } : null));
+    void window.pacsiDesktop?.mail.getConfig().then((c) => setMailConfig(c?.ready ? { autoCheckMinutes: c.autoCheckMinutes } : null));
   }, []);
   useEffect(refreshMailConfig, [refreshMailConfig]);
 

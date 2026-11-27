@@ -50,6 +50,8 @@ ipcMain.handle('mail:open', () => mail.open());
 ipcMain.handle('mail:list', () => mail.list());
 ipcMain.handle('mail:get', (_e, uid) => mail.get(uid));
 ipcMain.handle('mail:close', () => mail.close());
+ipcMain.handle('mail:msLogin', (_e, config) => mail.msLogin(config));
+ipcMain.handle('mail:msLogout', () => mail.msLogout());
 
 app.on('second-instance', () => {
   const [win] = BrowserWindow.getAllWindows();

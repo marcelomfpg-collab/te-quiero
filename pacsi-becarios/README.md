@@ -68,8 +68,13 @@ blandas 30, año de carrera 20, carrera técnica 15. El desglose se ve en el det
 ## Flujo de trabajo del reclutador
 
 1. **Recibir CVs**:
-   - **📥 Revisar correo** (programa de escritorio): la primera vez se configura el servidor IMAP, usuario y
-     contraseña (se guarda cifrada con Windows). Baja solo los correos nuevos cuyo asunto contiene "BECARIOS",
+   - **📥 Revisar correo** (programa de escritorio), con dos tipos de cuenta:
+     - **Microsoft 365 / Outlook de empresa** (`electron/microsoft.cjs` + `electron/graph.cjs`): inicio de sesión
+       oficial de Microsoft (OAuth con PKCE, permisos delegados de solo lectura `Mail.Read`, `Mail.Read.Shared`,
+       `User.Read`) y lectura con Microsoft Graph; admite buzones compartidos (p. ej. reclutamiento@…). La sesión se
+       renueva sola y se guarda cifrada con Windows. Requiere que TI registre la aplicación una vez en Entra ID
+       (guía dentro del programa: Más → Configurar correo).
+     - **Otro servidor (IMAP)**: servidor, usuario y contraseña (se guarda cifrada con Windows). Baja solo los correos nuevos cuyo asunto contiene "BECARIOS",
      con todos sus adjuntos (CV + certificados), y puede revisar el buzón automáticamente cada 15 minutos.
      Nunca duplica: recuerda los correos ya procesados y detecta DNIs repetidos.
    - **Subir CVs (PDF)**: arrastrar los archivos descargados (PDF, Word .docx o fotos).

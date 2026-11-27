@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
+const microsoft = require('./microsoft.cjs');
+const { createGraphMailbox } = require('./graph.cjs');
 
 const CONFIG_FILE = () => path.join(app.getPath('userData'), 'correo.json');
 const CV_TYPES = /\.(pdf|docx|png|jpe?g|webp)$/i;
@@ -23,11 +25,36 @@ function decryptPassword(stored) {
   return stored.encrypted ? safeStorage.decryptString(buf) : buf.toString('utf8');
 }
 
-function getConfig() {
+const isMicrosoft = (config) => config?.provider === 'microsoft';
+
+async function getConfig() {
   const stored = readStored();
   if (!stored) return null;
   const { password, encrypted, ...rest } = stored;
-  return { ...rest, hasPassword: Boolean(password) };
+  const msAccount = isMicrosoft(stored) ? await microsoft.signedInUser(stored) : '';
+  return { ...rest, hasPassword: Boolean(password), msAccount, ready: isMicrosoft(stored) ? Boolean(msAccount) : Boolean(password) };
+}
+
+function graphFor(config, user) {
+  return createGraphMailbox({
+    getToken: () => microsoft.getToken(config),
+    mailbox: config.msMailbox,
+    signedInUser: user,
+    folder: config.folder,
+    subjectFilter: config.subjectFilter,
+    sinceDate: config.sinceDate,
+  });
+}
+
+async function msLogin(config) {
+  const result = await microsoft.login(config);
+  if (result.ok) saveConfig({ ...(readStored() || {}), ...config, password: undefined });
+  return result;
+}
+
+async function msLogout() {
+  const stored = readStored();
+  if (stored) await microsoft.logout(stored);
 }
 
 function saveConfig(config) {
@@ -76,6 +103,16 @@ function hasCvAttachment(node) {
 let session = null;
 
 async function test(config) {
+  if (isMicrosoft(config)) {
+    try {
+      const user = await microsoft.signedInUser(config);
+      if (!user) return { ok: false, message: 'Primero inicie sesión con Microsoft.' };
+      const info = await graphFor(config, user).info();
+      return { ok: true, message: `Conexión correcta como ${user}. La carpeta "${info.folder}" tiene ${info.total} correos.`, total: info.total };
+    } catch (error) {
+      return { ok: false, message: error.message };
+    }
+  }
   const full = { ...config, password: config.password || decryptPassword(readStored()) };
   const client = clientFor(full);
   try {
@@ -92,6 +129,12 @@ async function test(config) {
 async function open() {
   const stored = readStored();
   if (!stored) throw new Error('Primero configure el correo.');
+  if (isMicrosoft(stored)) {
+    const user = await microsoft.signedInUser(stored);
+    if (!user) throw new Error('Inicie sesión con Microsoft (Más → Configurar correo).');
+    session = { graph: graphFor(stored, user), config: stored };
+    return;
+  }
   const config = { ...stored, password: decryptPassword(stored) };
   const client = clientFor(config);
   try {
@@ -105,6 +148,7 @@ async function open() {
 
 async function list() {
   if (!session) throw new Error('El correo no está conectado.');
+  if (session.graph) return session.graph.list();
   const { client, config } = session;
   const since = config.sinceDate ? new Date(`${config.sinceDate}T00:00:00`) : undefined;
   let uids = await client.search(since ? { since } : { all: true }, { uid: true });
@@ -132,6 +176,7 @@ async function list() {
 
 async function get(uid) {
   if (!session) throw new Error('El correo no está conectado.');
+  if (session.graph) return session.graph.get(uid);
   const msg = await session.client.fetchOne(String(uid), { source: true, envelope: true }, { uid: true });
   const parsed = await simpleParser(msg.source);
   const from = parsed.from?.value?.[0] || {};
@@ -152,10 +197,14 @@ async function get(uid) {
 
 async function close() {
   if (!session) return;
+  if (session.graph) {
+    session = null;
+    return;
+  }
   const { client, lock } = session;
   session = null;
   lock.release();
   await client.logout().catch(() => undefined);
 }
 
-module.exports = { getConfig, saveConfig, test, open, list, get, close };
+module.exports = { getConfig, saveConfig, test, open, list, get, close, msLogin, msLogout };

@@ -65,7 +65,7 @@ jobs:
           body: |
             ## Programa de filtro de postulantes · Becarios PACSI 2027-A
 
-            **Qué hace:** baja los CVs del correo de reclutamiento (o los sube usted en PDF/Word),
+            **Qué hace:** baja los CVs del correo de reclutamiento —Microsoft 365 / Outlook de empresa u otro servidor— (o los sube usted en PDF/Word),
             los **lee solo** —también los escaneados— y marca quién es **Apto**, **Por revisar** o **No apto**.
             Todo gratis y en su computadora: no usa servicios de pago.
 
