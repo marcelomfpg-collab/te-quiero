@@ -44,6 +44,8 @@ export function candidateFromCv(input: CvInput): { candidate: Candidate; extract
     softSkills: null,
     shift: ext.shift?.value ?? 'DIA',
     submittedAt: input.submittedAt,
+    // Solo la fecha del correo es confiable; la de un archivo puede ser la del día en que se copió.
+    dateConfirmed: input.source === 'correo',
     emailSubject: input.subject ?? '',
     stage: 'RECIBIDO',
     notes: '',

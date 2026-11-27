@@ -2,6 +2,7 @@ import { CAREER_LABEL, LICENSE_LABEL } from './catalogs';
 import { CONFIGURABLE_REQUIREMENTS, defaultCareerRules, formatYears, ruleFor, type CareerRule, type CareerRules } from './careerRules';
 import { CONVOCATORIA } from './convocatoria';
 import { checkSubject } from './subject';
+import { formatShortDate } from '../lib/dates';
 import type { Candidate, Eligibility, Evaluation, RequirementCheck, RequirementId, RequirementStatus, VerifiableField } from './types';
 
 type Config = typeof CONVOCATORIA;
@@ -85,7 +86,9 @@ function baseRequirements(c: Candidate, rule: CareerRule, cfg: Config): Requirem
   return [
     c.submittedAt <= cfg.deadline
       ? check('PLAZO', 'CUMPLE', 'CV recibido dentro del plazo')
-      : check('PLAZO', 'NO_CUMPLE', `CV recibido fuera de plazo (límite ${cfg.deadline})`),
+      : c.dateConfirmed === false
+        ? check('PLAZO', 'PENDIENTE', `Confirmar la fecha en que llegó el correo (el archivo es del ${formatShortDate(c.submittedAt)}; límite ${formatShortDate(cfg.deadline)})`)
+        : check('PLAZO', 'NO_CUMPLE', `CV recibido fuera de plazo (límite ${formatShortDate(cfg.deadline)})`),
 
     inProfile
       ? check('CARRERA', 'CUMPLE', CAREER_LABEL[c.career])

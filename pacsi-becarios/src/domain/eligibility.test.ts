@@ -94,3 +94,14 @@ describe('observaciones (no excluyentes)', () => {
     expect(e.warnings).toEqual(expect.arrayContaining(['DNI con formato inválido', 'Correo electrónico inválido']));
   });
 });
+
+describe('plazo con fecha no confirmada', () => {
+  it('un CV subido a mano o de la carpeta después del límite queda por revisar, no descartado', () => {
+    const e = evaluateCandidate(makeCandidate({ submittedAt: '2026-11-27', dateConfirmed: false }));
+    expect(e.checks.find((c) => c.id === 'PLAZO')).toMatchObject({ status: 'PENDIENTE', detail: expect.stringContaining('Confirmar la fecha') });
+    expect(e.eligibility).toBe('POR_EVALUAR');
+  });
+  it('con la fecha real del correo, fuera de plazo sí descarta', () => {
+    expect(evaluateCandidate(makeCandidate({ submittedAt: '2026-11-27', dateConfirmed: true })).eligibility).toBe('NO_APTO');
+  });
+});

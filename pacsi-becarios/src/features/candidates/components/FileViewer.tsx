@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CandidateFile } from '../../../domain/types';
-import { extractText, fileKind, pdfjs } from '../../../cv/textExtract';
+import { extractText, fileKind, pdf } from '../../../cv/textExtract';
 import { fileStore } from '../../../lib/fileStore';
 import { DEMO } from '../../../demo';
 import { Dialog } from './Dialog';
@@ -27,7 +27,7 @@ export function FileViewer({ file, onClose }: { file: CandidateFile; onClose: ()
       } else if (kind === 'word') {
         setText((await extractText(await blob.arrayBuffer(), file.name, file.type)).text);
       } else if (kind === 'pdf') {
-        const task = pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) });
+        const task = pdf().getDocument({ data: new Uint8Array(await blob.arrayBuffer()) });
         const doc = await task.promise;
         for (let i = 1; i <= doc.numPages && !cancelled; i++) {
           const page = await doc.getPage(i);

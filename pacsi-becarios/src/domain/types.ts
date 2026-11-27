@@ -23,7 +23,7 @@ export type VerifiableField =
   | 'technicalCareerCertified'
   | 'dni';
 
-export type CandidateSource = 'manual' | 'excel' | 'cv' | 'correo' | 'ejemplo';
+export type CandidateSource = 'manual' | 'excel' | 'cv' | 'correo' | 'carpeta' | 'ejemplo';
 
 /** Archivo adjunto (CV, certificados) guardado en la computadora. */
 export interface CandidateFile {
@@ -58,6 +58,11 @@ export interface Candidate {
   shift: Shift;
   /** Fecha de envío del CV, ISO `YYYY-MM-DD`. */
   submittedAt: string;
+  /**
+   * false cuando la fecha no viene del correo (CV subido a mano o tomado de una carpeta):
+   * entonces el plazo no descarta, queda por revisar. Sin valor = confirmada.
+   */
+  dateConfirmed?: boolean;
   emailSubject: string;
   stage: Stage;
   notes: string;

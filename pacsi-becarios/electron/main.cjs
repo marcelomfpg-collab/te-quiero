@@ -4,6 +4,7 @@ const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const mail = require('./mail.cjs');
+const folder = require('./folder.cjs');
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -52,6 +53,11 @@ ipcMain.handle('mail:get', (_e, uid) => mail.get(uid));
 ipcMain.handle('mail:close', () => mail.close());
 ipcMain.handle('mail:msLogin', (_e, config) => mail.msLogin(config));
 ipcMain.handle('mail:msLogout', () => mail.msLogout());
+ipcMain.handle('folder:getConfig', () => folder.getConfig());
+ipcMain.handle('folder:saveConfig', (_e, config) => folder.saveConfig(config));
+ipcMain.handle('folder:choose', () => folder.choose());
+ipcMain.handle('folder:list', () => folder.list());
+ipcMain.handle('folder:read', (_e, rel) => folder.read(rel));
 
 app.on('second-instance', () => {
   const [win] = BrowserWindow.getAllWindows();

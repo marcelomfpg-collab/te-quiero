@@ -77,7 +77,13 @@ blandas 30, año de carrera 20, carrera técnica 15. El desglose se ve en el det
      - **Otro servidor (IMAP)**: servidor, usuario y contraseña (se guarda cifrada con Windows). Baja solo los correos nuevos cuyo asunto contiene "BECARIOS",
      con todos sus adjuntos (CV + certificados), y puede revisar el buzón automáticamente cada 15 minutos.
      Nunca duplica: recuerda los correos ya procesados y detecta DNIs repetidos.
-   - **Subir CVs (PDF)**: arrastrar los archivos descargados (PDF, Word .docx o fotos).
+   - **📂 Vigilar carpeta de CVs** (recomendado, sin permisos de TI): una regla de Power Automate guarda los adjuntos
+     del correo en una carpeta de OneDrive con el nombre `remitente@correo__archivo.pdf`; el programa
+     (`electron/folder.cjs`, `src/cv/importFolder.ts`) revisa la carpeta, lee solo los archivos nuevos, junta el CV y los
+     certificados del mismo remitente y agrega a un postulante existente lo que llegue después. Guía de Power Automate
+     dentro del programa (Más → Configurar carpeta de CVs).
+   - **Subir CVs (PDF)**: arrastrar los archivos descargados (PDF, Word .doc/.docx o fotos).
+   - Si la fecha no viene del correo (archivo subido o de la carpeta), el plazo no descarta: queda por revisar.
    - También: **＋ Nuevo** (formulario) o **Más → Importar desde Excel**.
 2. **Lectura automática del CV** (`src/cv/`), sin IA ni servicios de pago:
    - Nombre y carrera desde el **asunto del correo** (`BECARIOS 2027 - APELLIDO NOMBRE - CARRERA`).

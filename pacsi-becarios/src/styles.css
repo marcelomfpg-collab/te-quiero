@@ -453,3 +453,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .guide summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 .guide ol { margin: 10px 0 6px; padding-left: 20px; display: grid; gap: 6px; }
 .guide code { font-family: var(--mono); background: var(--surface); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); }
+.folder-pick { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
+.folder-pick.is-on { border-style: solid; border-color: var(--ok); background: var(--ok-bg); }
+.folder-pick__path { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; min-width: 0; flex: 1; }

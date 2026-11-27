@@ -51,14 +51,14 @@ interface WelcomeStateProps {
   onSamples?: () => void;
   samplesRunning?: boolean;
   /** Solo en el programa de escritorio. */
-  onMail?: () => void;
+  onFolder?: () => void;
   onUpload: () => void;
   onAdd: () => void;
   onSample: () => void;
 }
 
 /** Primera vez que se abre el programa: caminos claros para empezar. */
-export function WelcomeState({ onSamples, samplesRunning, onMail, onUpload, onAdd, onSample }: WelcomeStateProps) {
+export function WelcomeState({ onSamples, samplesRunning, onFolder, onUpload, onAdd, onSample }: WelcomeStateProps) {
   return (
     <div className="welcome">
       <h2 className="welcome__title">Bienvenido al filtro de postulantes</h2>
@@ -74,14 +74,14 @@ export function WelcomeState({ onSamples, samplesRunning, onMail, onUpload, onAd
             <span className="muted">PDF y Word de prueba: vea qué detecta el lector.</span>
           </button>
         )}
-        {onMail && (
-          <button type="button" className="welcome__option welcome__option--main" onClick={onMail}>
-            <span className="welcome__icon" aria-hidden="true">📥</span>
-            <strong>Conectar el correo</strong>
-            <span className="muted">Baja solo los CVs del buzón de reclutamiento.</span>
+        {onFolder && (
+          <button type="button" className="welcome__option welcome__option--main" onClick={onFolder}>
+            <span className="welcome__icon" aria-hidden="true">📂</span>
+            <strong>Vigilar la carpeta de CVs</strong>
+            <span className="muted">Outlook guarda los CVs en OneDrive y el programa los lee solo.</span>
           </button>
         )}
-        <button type="button" className={`welcome__option ${onMail || onSamples ? '' : 'welcome__option--main'}`} onClick={onUpload}>
+        <button type="button" className={`welcome__option ${onFolder || onSamples ? '' : 'welcome__option--main'}`} onClick={onUpload}>
           <span className="welcome__icon" aria-hidden="true">⤒</span>
           <strong>{onSamples ? 'Subir sus propios CVs' : 'Subir CVs en PDF'}</strong>
           <span className="muted">Elija los CVs descargados (muchos a la vez).</span>

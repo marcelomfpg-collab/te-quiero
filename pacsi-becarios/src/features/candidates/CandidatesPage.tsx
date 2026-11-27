@@ -19,6 +19,8 @@ import { CvImportDialog, ImportResultView } from './components/CvImportDialog';
 import { Dialog } from './components/Dialog';
 import { FileViewer } from './components/FileViewer';
 import { MailDialog } from './components/MailDialog';
+import { FolderDialog } from './components/FolderDialog';
+import { clearProcessedFolderKeys, syncFolder, type FolderSyncSummary } from '../../cv/importFolder';
 import { RulesDialog } from './components/RulesDialog';
 import { useCareerRules } from './hooks/useCareerRules';
 import { defaultCareerRules, sameRules } from '../../domain/careerRules';
@@ -81,6 +83,13 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
   /** El correo solo se puede conectar desde el programa de escritorio. */
   const desktop = typeof window !== 'undefined' && !!window.pacsiDesktop;
   const [mailConfig, setMailConfig] = useState<{ autoCheckMinutes: number } | null>(null);
+  const [folderSettings, setFolderSettings] = useState(false);
+  const [folderConfig, setFolderConfig] = useState<{ autoCheckMinutes: number } | null>(null);
+  const [folderSync, setFolderSync] = useState<{ progress: string | null; summary: FolderSyncSummary | null; error?: string } | null>(null);
+  const refreshFolderConfig = useCallback(() => {
+    void window.pacsiDesktop?.folder.getConfig().then((c) => setFolderConfig(c?.path ? { autoCheckMinutes: c.autoCheckMinutes } : null));
+  }, []);
+  useEffect(refreshFolderConfig, [refreshFolderConfig]);
 
   const refreshMailConfig = useCallback(() => {
     void window.pacsiDesktop?.mail.getConfig().then((c) => setMailConfig(c?.ready ? { autoCheckMinutes: c.autoCheckMinutes } : null));
@@ -146,6 +155,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
     if (!ask('¿Borrar TODOS los postulantes y CVs de esta computadora? Haga antes una copia de seguridad.')) return;
     void fileStore.clear().catch(() => undefined);
     clearProcessedIds();
+    clearProcessedFolderKeys();
     void replaceData([], 'Se borraron todos los postulantes.');
   };
 
@@ -227,6 +237,36 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
 
   const openMail = () => (mailConfig ? void checkMail() : setMailSettings(true));
 
+  const checkFolder = useCallback(
+    async (silent = false) => {
+      if (!window.pacsiDesktop || folderSync?.progress) return;
+      if (!silent) setFolderSync({ progress: 'Revisando la carpeta…', summary: null });
+      try {
+        const summary = await syncFolder(load.data ?? [], today, (m) => !silent && setFolderSync({ progress: m, summary: null }));
+        if (summary.created.length) await load.importMany(summary.created);
+        for (const u of summary.updated) await load.update(u.candidate.id, u.patch);
+        if (silent) {
+          const n = summary.created.length + summary.updated.length;
+          if (n) setToast({ text: `📂 ${summary.created.length} CV(s) nuevos de la carpeta${summary.updated.length ? ` y ${summary.updated.length} archivo(s) agregados` : ''}.`, tone: 'ok' });
+        } else setFolderSync({ progress: null, summary });
+      } catch (error) {
+        const message = messageOf(error, 'No se pudo revisar la carpeta.');
+        if (silent) notifyError(message);
+        else setFolderSync({ progress: null, summary: null, error: message });
+      }
+    },
+    [load, today, folderSync?.progress, notifyError],
+  );
+
+  // Revisión automática de la carpeta mientras el programa está abierto.
+  useEffect(() => {
+    if (!folderConfig?.autoCheckMinutes || !hasData) return;
+    const timer = setInterval(() => void checkFolder(true), folderConfig.autoCheckMinutes * 60_000);
+    return () => clearInterval(timer);
+  }, [folderConfig, hasData, checkFolder]);
+
+  const openFolder = () => (folderConfig ? void checkFolder() : setFolderSettings(true));
+
   const handleImport = async (candidates: Parameters<typeof load.importMany>[0]) => {
     const n = await load.importMany(candidates);
     setToast({ text: n === 1 ? '1 postulante importado y evaluado.' : `${n} postulantes importados y evaluados.`, tone: 'ok' });
@@ -247,8 +287,13 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
         </div>
         <div className="page__actions">
           {desktop && (
-            <button type="button" className="btn btn--primary" onClick={openMail} disabled={!hasData || !!sync?.progress}>
-              📥 {mailConfig ? 'Revisar correo' : 'Conectar correo'}
+            <button type="button" className="btn btn--primary" onClick={openFolder} disabled={!hasData || !!folderSync?.progress}>
+              📂 {folderConfig ? 'Revisar carpeta' : 'Vigilar carpeta de CVs'}
+            </button>
+          )}
+          {desktop && mailConfig && (
+            <button type="button" className="btn btn--secondary" onClick={openMail} disabled={!hasData || !!sync?.progress}>
+              📥 Revisar correo
             </button>
           )}
           <button type="button" className={`btn ${desktop ? 'btn--secondary' : 'btn--primary'}`} onClick={() => setCvImporting(true)} disabled={!hasData}>
@@ -273,8 +318,14 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           <Popover label="Más" align="end" closeOnSelect>
             <div className="menu">
               {desktop && (
+                <button type="button" className="menu__item" onClick={() => setFolderSettings(true)}>
+                  Configurar carpeta de CVs
+                  <span className="muted">Carpeta de OneDrive y guía de Power Automate</span>
+                </button>
+              )}
+              {desktop && (
                 <button type="button" className="menu__item" onClick={() => setMailSettings(true)}>
-                  Configurar correo
+                  Configurar correo (Microsoft 365)
                   <span className="muted">Servidor, contraseña y revisión automática</span>
                 </button>
               )}
@@ -369,7 +420,7 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
           <WelcomeState
             onSamples={DEMO ? () => void trySamples() : undefined}
             samplesRunning={sampleRunning}
-            onMail={desktop ? openMail : undefined}
+            onFolder={desktop ? openFolder : undefined}
             onUpload={() => setCvImporting(true)}
             onAdd={() => setForm('new')}
             onSample={loadSample}
@@ -471,6 +522,62 @@ export function CandidatesPage({ repository }: { repository: CandidateRepository
             setToast({ text: 'Requisitos actualizados: los resultados ya se recalcularon.', tone: 'ok' });
           }}
         />
+      )}
+      {folderSettings && (
+        <FolderDialog
+          onClose={() => setFolderSettings(false)}
+          onSaved={() => {
+            setFolderSettings(false);
+            refreshFolderConfig();
+            void checkFolder();
+          }}
+        />
+      )}
+      {folderSync && (
+        <Dialog title="Revisar carpeta de CVs" eyebrow="Outlook → OneDrive" onClose={folderSync.progress ? () => undefined : () => setFolderSync(null)}>
+          {folderSync.progress && (
+            <div className="progress" role="status" aria-live="polite">
+              <span className="spinner" aria-hidden="true" />
+              <span>{folderSync.progress}</span>
+            </div>
+          )}
+          {folderSync.error && (
+            <>
+              <p className="form-error" role="alert">{folderSync.error}</p>
+              <button type="button" className="btn btn--link" onClick={() => { setFolderSync(null); setFolderSettings(true); }}>
+                Revisar la carpeta elegida
+              </button>
+            </>
+          )}
+          {folderSync.summary && (
+            <ImportResultView
+              summary={folderSync.summary}
+              extra={
+                <>
+                  <p className="muted">{folderSync.summary.checked} archivo(s) nuevo(s) en la carpeta.</p>
+                  {folderSync.summary.updated.length > 0 && (
+                    <details className="skipped" open>
+                      <summary>{folderSync.summary.updated.length} archivo(s) agregados a postulantes que ya estaban</summary>
+                      <ul>
+                        {folderSync.summary.updated.map((u, i) => (
+                          <li key={i}>
+                            <strong>{u.candidate.lastNames}, {u.candidate.firstNames}:</strong> {u.files.join(', ')}
+                            {u.patch.experienceCertified ? ' (certificado de experiencia recibido)' : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </>
+              }
+            />
+          )}
+          {!folderSync.progress && (
+            <div className="dialog__actions">
+              <button type="button" className="btn btn--primary" onClick={() => setFolderSync(null)}>Listo</button>
+            </div>
+          )}
+        </Dialog>
       )}
       {viewing && <FileViewer file={viewing} onClose={() => setViewing(null)} />}
       {importing && load.data && <ImportDialog existing={load.data} today={today} onImport={handleImport} onClose={closeImport} />}

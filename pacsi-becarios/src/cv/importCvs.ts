@@ -10,7 +10,7 @@ export interface ImportSummary {
   ocrUsed: number;
 }
 
-interface IncomingFile {
+export interface IncomingFile {
   name: string;
   type: string;
   data: ArrayBuffer;
@@ -19,7 +19,7 @@ interface IncomingFile {
 const PROCESSED_KEY = 'pacsi-becarios-2027a:correos-procesados';
 
 /** Guarda los archivos y devuelve su texto unido (CV + certificados del mismo postulante). */
-async function readFiles(files: IncomingFile[], onProgress: ProgressFn, summary: ImportSummary): Promise<{ text: string; stored: CandidateFile[] }> {
+export async function readFiles(files: IncomingFile[], onProgress: ProgressFn, summary: ImportSummary): Promise<{ text: string; stored: CandidateFile[] }> {
   const texts: string[] = [];
   const stored: CandidateFile[] = [];
   for (const f of files) {
@@ -38,7 +38,7 @@ async function readFiles(files: IncomingFile[], onProgress: ProgressFn, summary:
   return { text: texts.join('\n\n'), stored };
 }
 
-function duplicateOf(candidate: Candidate, existing: Candidate[]): Candidate | undefined {
+export function duplicateOf(candidate: Candidate, existing: Candidate[]): Candidate | undefined {
   if (candidate.emailMessageId && existing.some((c) => c.emailMessageId === candidate.emailMessageId)) {
     return existing.find((c) => c.emailMessageId === candidate.emailMessageId);
   }

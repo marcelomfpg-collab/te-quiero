@@ -8,6 +8,13 @@ contextBridge.exposeInMainWorld('pacsiDesktop', {
   ocrPaths: ocrBase
     ? { workerPath: `${ocrBase}/worker.min.js`, corePath: `${ocrBase}/core`, langPath: `${ocrBase}/lang` }
     : undefined,
+  folder: {
+    getConfig: () => ipcRenderer.invoke('folder:getConfig'),
+    saveConfig: (config) => ipcRenderer.invoke('folder:saveConfig', config),
+    choose: () => ipcRenderer.invoke('folder:choose'),
+    list: () => ipcRenderer.invoke('folder:list'),
+    read: (rel) => ipcRenderer.invoke('folder:read', rel),
+  },
   mail: {
     getConfig: () => ipcRenderer.invoke('mail:getConfig'),
     saveConfig: (config) => ipcRenderer.invoke('mail:saveConfig', config),

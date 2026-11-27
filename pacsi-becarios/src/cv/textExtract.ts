@@ -3,7 +3,6 @@ import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { TextItem } from 'pdfjs-dist/types/src/display/api';
 import PdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&inline';
 
-pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
 import { DEMO } from '../demo';
 
 export type ExtractMethod = 'texto' | 'ocr' | 'word' | 'word-antiguo' | 'sin-soporte';
@@ -14,8 +13,11 @@ export interface ExtractResult {
   pages?: number;
 }
 
-/** Mismo módulo de PDF para el visor. */
-export { pdfjs };
+/** Lector de PDF listo para usar; su proceso de fondo se crea la primera vez que hace falta. */
+export function pdf(): typeof pdfjs {
+  if (!pdfjs.GlobalWorkerOptions.workerPort) pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
+  return pdfjs;
+}
 
 export type ProgressFn = (message: string) => void;
 
@@ -60,7 +62,7 @@ function pdfOpenError(error: unknown): Error {
 }
 
 async function extractPdf(data: ArrayBuffer, onProgress?: ProgressFn): Promise<ExtractResult> {
-  const task = pdfjs.getDocument({ data: new Uint8Array(data.slice(0)) });
+  const task = pdf().getDocument({ data: new Uint8Array(data.slice(0)) });
   const doc = await task.promise.catch((error: unknown) => {
     throw pdfOpenError(error);
   });

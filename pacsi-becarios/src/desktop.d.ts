@@ -40,7 +40,27 @@ interface MailMessage extends MailSummary {
   attachments: MailAttachment[];
 }
 
+interface FolderFile {
+  /** Ruta relativa dentro de la carpeta vigilada. */
+  rel: string;
+  name: string;
+  size: number;
+  mtimeMs: number;
+}
+
+interface FolderConfig {
+  path: string;
+  autoCheckMinutes: number;
+}
+
 interface PacsiDesktop {
+  folder: {
+    getConfig(): Promise<(FolderConfig & { exists: boolean }) | null>;
+    saveConfig(config: FolderConfig): Promise<void>;
+    choose(): Promise<string | null>;
+    list(): Promise<FolderFile[]>;
+    read(rel: string): Promise<Uint8Array>;
+  };
   ocrPaths?: { workerPath: string; corePath: string; langPath: string };
   mail: {
     getConfig(): Promise<(Omit<MailConfig, 'password'> & { hasPassword: boolean; msAccount: string; ready: boolean }) | null>;

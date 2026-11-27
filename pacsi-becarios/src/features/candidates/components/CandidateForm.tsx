@@ -15,7 +15,7 @@ interface CandidateFormProps {
   onClose: () => void;
 }
 
-type Values = Omit<Candidate, 'id' | 'code' | 'stage' | 'notes' | 'softSkills' | 'missing' | 'uncertain' | 'evidence' | 'files' | 'source' | 'emailMessageId'>;
+type Values = Omit<Candidate, 'id' | 'code' | 'stage' | 'notes' | 'softSkills' | 'missing' | 'uncertain' | 'evidence' | 'files' | 'source' | 'emailMessageId' | 'dateConfirmed'>;
 
 function emptyValues(today: string): Values {
   return {
@@ -58,7 +58,7 @@ export function validateValues(v: Values, existing: Candidate[], editingId?: str
 export function CandidateForm({ initial, existing, today, onSave, onClose }: CandidateFormProps) {
   const [values, setValues] = useState<Values>(() => {
     if (!initial) return emptyValues(today);
-    const { id: _id, code: _c, stage: _s, notes: _n, softSkills: _ss, missing: _m, uncertain: _u, evidence: _e, files: _f, source: _src, emailMessageId: _mid, ...rest } = initial;
+    const { id: _id, code: _c, stage: _s, notes: _n, softSkills: _ss, missing: _m, uncertain: _u, evidence: _e, files: _f, source: _src, emailMessageId: _mid, dateConfirmed: _dc, ...rest } = initial;
     return rest;
   });
   /** Datos que el lector de CVs no encontró o no está seguro: se resaltan para revisarlos. */
@@ -80,7 +80,7 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
     const careerName = values.career === 'OTRA' ? values.careerName.trim() : CAREER_LABEL[values.career];
     // Al guardar, la persona confirma los datos: dejan de estar "por revisar".
     const candidate: Candidate = initial
-      ? { ...initial, ...values, careerName, missing: [], uncertain: [] }
+      ? { ...initial, ...values, careerName, missing: [], uncertain: [], dateConfirmed: true }
       : { ...values, careerName, id: newId(), code: formatCode(maxCodeNumber(existing) + 1), stage: 'RECIBIDO', notes: '', softSkills: null };
     try {
       await onSave(candidate);
@@ -196,7 +196,7 @@ export function CandidateForm({ initial, existing, today, onSave, onClose }: Can
         <fieldset className="form__group">
           <legend>Correo recibido</legend>
           <div className="form__grid">
-            {text('submittedAt', 'Fecha de envío *', { type: 'date' })}
+            {text('submittedAt', initial?.dateConfirmed === false ? 'Fecha en que llegó el correo * 🔍' : 'Fecha de envío *', { type: 'date' })}
             <span />
           </div>
           {text('emailSubject', 'Asunto del correo', { placeholder: CONVOCATORIA.subjectFormat })}
